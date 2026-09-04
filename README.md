@@ -72,7 +72,7 @@ Para executar as aplicações diretamente na máquina:
 Clone o repositório e acesse sua raiz:
 
 ``` bash
-git clone <url-do-repositorio>
+git clone https://github.com/MatheusNetto1/srs-tour
 cd srs-tour
 ```
 
