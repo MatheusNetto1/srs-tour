@@ -1,21 +1,46 @@
 @import "tailwindcss";
 
-html {
-	scroll-behavior: smooth;
+@theme {
+	--color-brand-blue: #0a4aad;
+	--color-brand-purple: #6c5ce0;
+	--color-brand-magenta: #c750d6;
+
+	--color-chart-cyan: #5fe6e0;
+	--color-chart-sky: #27b7ed;
+	--color-chart-purple: #b986ed;
+	--color-chart-lilac: #e3b8f7;
+	--color-chart-yellow: #fada77;
 }
 
-body {
-	margin: 0;
-	min-width: 320px;
-	min-height: 100vh;
-	background: #f8fafc;
-	color: #0f172a;
+@layer base {
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		margin: 0;
+		min-width: 320px;
+		min-height: 100vh;
+		background: #f8fafc;
+		color: #0f172a;
+	}
+
+	button,
+	a,
+	input,
+	select,
+	textarea {
+		font: inherit;
+	}
 }
 
-button,
-a,
-input,
-select,
-textarea {
-	font: inherit;
+@layer utilities {
+	.bg-brand-gradient {
+		background: linear-gradient(
+			135deg,
+			var(--color-brand-blue),
+			var(--color-brand-purple),
+			var(--color-brand-magenta)
+		);
+	}
 }

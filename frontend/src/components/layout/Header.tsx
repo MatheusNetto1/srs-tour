@@ -1,86 +1,103 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+
+import { logos } from "../../constants/assets";
 import { PageContainer } from "./PageContainer";
 
 const navigation = [
-	{ name: "Início", href: "/" },
-	{ name: "Indicadores", href: "/indicadores" },
-	{ name: "Relatórios", href: "/relatorios" },
-	{ name: "Sobre", href: "/sobre" },
+	{
+		label: "Início",
+		to: "/",
+	},
+	{
+		label: "Indicadores",
+		to: "/indicadores",
+	},
+	{
+		label: "Relatórios",
+		to: "/relatorios",
+	},
+	{
+		label: "Sobre",
+		to: "/sobre",
+	},
 ];
 
 export function Header() {
-	const [menuOpen, setMenuOpen] = useState(false);
+	const [isMenuOpen, setIsMenuOpen] = useState(false);
 
 	return (
 		<header className="border-b border-slate-200 bg-white">
-			<PageContainer>
-				<div className="flex h-20 items-center justify-between">
-					<Link
+			<PageContainer size="wide">
+				<div className="flex h-24 items-center justify-between">
+					<NavLink
 						to="/"
-						className="flex items-center gap-3"
 						aria-label="Página inicial do Observatório do Turismo"
+						className="flex items-center gap-3"
+						onClick={() => setIsMenuOpen(false)}
 					>
-						<span className="font-bold text-slate-900">
-							Observatório do Turismo
-						</span>
-					</Link>
+						<img
+							src={logos.observatorio.black}
+							alt="Observatório do Turismo de Santa Rita do Sapucaí"
+							className="h-12 w-auto object-contain"
+						/>
+					</NavLink>
 
 					<nav
-						className="hidden items-center gap-8 md:flex"
 						aria-label="Navegação principal"
+						className="hidden items-center gap-8 md:flex"
 					>
 						{navigation.map((item) => (
 							<NavLink
-								key={item.href}
-								to={item.href}
+								key={item.to}
+								to={item.to}
 								className={({ isActive }) =>
 									[
 										"text-sm font-medium transition-colors",
 										isActive
-											? "text-[#0A4AAD]"
+											? "text-brand-blue"
 											: "text-slate-600 hover:text-slate-950",
 									].join(" ")
 								}
 							>
-								{item.name}
+								{item.label}
 							</NavLink>
 						))}
 					</nav>
 
 					<button
 						type="button"
+						aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+						aria-expanded={isMenuOpen}
 						className="rounded-lg p-2 text-slate-700 md:hidden"
-						onClick={() => setMenuOpen((current) => !current)}
-						aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-						aria-expanded={menuOpen}
+						onClick={() => setIsMenuOpen((current) => !current)}
 					>
-						{menuOpen ? <X /> : <Menu />}
+						{isMenuOpen ? <X size={24} /> : <Menu size={24} />}
 					</button>
 				</div>
 
-				{menuOpen && (
+				{isMenuOpen && (
 					<nav
-						className="border-t border-slate-100 py-4 md:hidden"
 						aria-label="Navegação mobile"
+						className="border-t border-slate-100 py-4 md:hidden"
 					>
-						<div className="flex flex-col gap-2">
+						<div className="flex flex-col gap-1">
 							{navigation.map((item) => (
 								<NavLink
-									key={item.href}
-									to={item.href}
-									onClick={() => setMenuOpen(false)}
+									key={item.to}
+									to={item.to}
+									onClick={() => setIsMenuOpen(false)}
 									className={({ isActive }) =>
 										[
-											"rounded-lg px-3 py-2 text-sm font-medium",
+											"rounded-lg px-3 py-3 text-sm font-medium transition-colors",
 											isActive
-												? "bg-blue-50 text-[#0A4AAD]"
-												: "text-slate-600 hover:bg-slate-50",
+												? "bg-blue-50 text-brand-blue"
+												: "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
 										].join(" ")
 									}
 								>
-									{item.name}
+									{item.label}
 								</NavLink>
 							))}
 						</div>
