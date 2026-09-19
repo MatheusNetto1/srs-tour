@@ -1,14 +1,35 @@
-export const dashboardEvolution = [
-	{ year: 2022, establishments: 21 },
-	{ year: 2023, establishments: 24 },
-	{ year: 2024, establishments: 27 },
-	{ year: 2025, establishments: 30 },
-	{ year: 2026, establishments: 32 },
-];
+import { indicators } from "./indicators";
 
-export const sectorDistribution = [
-	{ sector: "Hospedagem", value: 32 },
-	{ sector: "Alimentação", value: 58 },
-	{ sector: "Comércio", value: 47 },
-	{ sector: "Serviços", value: 49 },
-];
+export const dashboardEvolution = indicators
+	.filter(
+		(indicator) =>
+			indicator.name === "Meios de hospedagem" &&
+			indicator.status === "published",
+	)
+	.sort((a, b) => a.period - b.period)
+	.map((indicator) => ({
+		year: indicator.period,
+		establishments: indicator.value,
+	}));
+
+const sectorIndicatorNames = {
+	Hospedagem: "Meios de hospedagem",
+	Alimentação: "Estabelecimentos de alimentação",
+	Serviços: "Empresas de serviços turísticos",
+} as const;
+
+export function getSectorDistribution(period: number) {
+	return Object.entries(sectorIndicatorNames).map(([sector, indicatorName]) => {
+		const indicator = indicators.find(
+			(item) =>
+				item.name === indicatorName &&
+				item.period === period &&
+				item.status === "published",
+		);
+
+		return {
+			sector,
+			value: indicator?.value ?? 0,
+		};
+	});
+}

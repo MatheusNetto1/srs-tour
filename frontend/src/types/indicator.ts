@@ -1,12 +1,17 @@
-export type IndicatorStatus = "draft" | "published";
+export type IndicatorSector =
+	| "Hospedagem"
+	| "Alimentação"
+	| "Serviços"
+	| "Geral";
+
+export type IndicatorStatus = "published" | "draft";
 
 export interface Indicator {
 	id: string;
 	name: string;
-	sector: string;
+	sector: IndicatorSector;
 	period: number;
 	value: number;
 	unit: string;
 	status: IndicatorStatus;
-	updatedAt: string;
 }
