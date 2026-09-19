@@ -1,11 +1,18 @@
-export type ReportStatus = "draft" | "published";
+export type ReportCategory =
+	| "Pesquisa"
+	| "Relatório anual"
+	| "Boletim"
+	| "Estudo";
+
+export type ReportStatus = "published" | "draft";
 
 export interface Report {
 	id: string;
 	title: string;
 	description: string;
+	category: ReportCategory;
 	year: number;
-	fileUrl: string;
+	publishedAt: string;
 	status: ReportStatus;
-	publishedAt?: string;
+	file?: string;
 }
