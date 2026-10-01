@@ -11,8 +11,10 @@ class IndicatorBase(BaseModel):
     value: float = Field(..., description="Valor numérico do indicador")
     unit: str = Field(..., description="Unidade de medida, ex: % ou R$")
 
+
 class IndicatorCreate(IndicatorBase):
     status: IndicatorStatus | None = IndicatorStatus.DRAFT
+
 
 class IndicatorUpdate(BaseModel):
     name: str | None = None
@@ -20,6 +22,7 @@ class IndicatorUpdate(BaseModel):
     period: str | None = None
     value: float | None = None
     unit: str | None = None
+
 
 class IndicatorResponse(IndicatorBase):
     id: int

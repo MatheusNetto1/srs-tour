@@ -16,10 +16,10 @@ class IndicatorRepository:
         return db_obj
 
     def get_all(
-        self, 
-        period: str | None = None, 
-        sector: str | None = None, 
-        status: IndicatorStatus | None = None
+        self,
+        period: str | None = None,
+        sector: str | None = None,
+        status: IndicatorStatus | None = None,
     ) -> list[Indicator]:
         stmt = select(Indicator)
         if period:
@@ -28,7 +28,7 @@ class IndicatorRepository:
             stmt = stmt.where(Indicator.sector == sector)
         if status:
             stmt = stmt.where(Indicator.status == status)
-            
+
         return list(self.session.scalars(stmt).all())
 
     def get_by_id(self, indicator_id: int) -> Indicator | None:

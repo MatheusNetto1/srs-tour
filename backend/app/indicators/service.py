@@ -11,18 +11,17 @@ class IndicatorService:
     def create_indicator(self, data: IndicatorCreate) -> Indicator:
         return self.repo.create(data)
 
-    def get_indicators(self, period: str | 
-                       None, sector: str | 
-                       None, status: IndicatorStatus | 
-                       None) -> list[Indicator]:
+    def get_indicators(
+        self, period: str | None, sector: str | None, status: IndicatorStatus | None
+    ) -> list[Indicator]:
         return self.repo.get_all(period=period, sector=sector, status=status)
 
     def get_indicator_by_id(self, indicator_id: int) -> Indicator:
         obj = self.repo.get_by_id(indicator_id)
         if not obj:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
-                detail="Indicador não encontrado."
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Indicador não encontrado.",
             )
         return obj
 
@@ -35,8 +34,9 @@ class IndicatorService:
         obj = self.get_indicator_by_id(indicator_id)
         self.repo.delete(obj)
 
-    def change_status(self, indicator_id: int, 
-                      new_status: IndicatorStatus) -> Indicator:
+    def change_status(
+        self, indicator_id: int, new_status: IndicatorStatus
+    ) -> Indicator:
         obj = self.get_indicator_by_id(indicator_id)
         if obj.status == new_status:
             return obj
