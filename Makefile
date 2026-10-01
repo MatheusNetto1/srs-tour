@@ -146,14 +146,23 @@ ps:
 # Backend
 # ------------------------------------------
 
+back-lock:
+	@cd $(BACKEND_DIR) && poetry lock
+
 back-dev:
 	@cd $(BACKEND_DIR) && poetry run uvicorn app.main:app --reload
 
 back-lint:
 	@cd $(BACKEND_DIR) && poetry run ruff check .
 
+back-lint-fix:
+	cd backend && poetry run ruff check --fix .
+
 back-format:
 	@cd $(BACKEND_DIR) && poetry run ruff format .
+
+back-format-check:
+	cd backend && poetry run ruff format --check .
 
 back-test:
 	@cd $(BACKEND_DIR) && poetry run pytest
