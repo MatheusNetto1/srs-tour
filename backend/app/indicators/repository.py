@@ -1,5 +1,5 @@
-from indicators.models import Indicator, IndicatorStatus
-from indicators.schemas import IndicatorCreate
+from app.indicators.models import Indicator, IndicatorStatus
+from app.indicators.schemas import IndicatorCreate  
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 

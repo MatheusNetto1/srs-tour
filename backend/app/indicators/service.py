@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
-from indicators.models import Indicator, IndicatorStatus
-from indicators.repository import IndicatorRepository
-from indicators.schemas import IndicatorCreate, IndicatorUpdate
+from app.indicators.repository import IndicatorRepository
+from app.indicators.schemas import IndicatorCreate, IndicatorUpdate
+from app.indicators.models import Indicator, IndicatorStatus
 
 
 class IndicatorService:

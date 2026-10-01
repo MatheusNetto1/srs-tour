@@ -1,9 +1,9 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
-from indicators import models, schemas
-from indicators.repository import IndicatorRepository
-from indicators.service import IndicatorService
+from app.indicators import models, schemas
+from app.indicators.repository import IndicatorRepository
+from app.indicators.service import IndicatorService
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_db
