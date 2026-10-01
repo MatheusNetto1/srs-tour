@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Dev documentation
+.dev/
+backend/.dev/
+frontend/.dev/
