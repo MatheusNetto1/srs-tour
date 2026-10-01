@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from app.indicators.models import IndicatorStatus
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.indicators.models import IndicatorStatus
 
 
 class IndicatorBase(BaseModel):
