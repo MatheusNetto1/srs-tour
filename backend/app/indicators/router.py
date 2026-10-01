@@ -8,7 +8,7 @@ from app.indicators import models, schemas
 from app.indicators.repository import IndicatorRepository
 from app.indicators.service import IndicatorService
 
-router = APIRouter(prefix="/indicators", tags=["Indicators"])
+router = APIRouter()
 
 DbDep = Annotated[Session, Depends(get_db)]
 
