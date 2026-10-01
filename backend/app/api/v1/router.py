@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from app.indicators.router import router as indicators_router
 
 from app.tourism.router import router as tourism_router
