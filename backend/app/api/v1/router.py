@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from app.indicators.router import router as indicators_router
 
 from app.tourism.router import router as tourism_router
 from app.users.router import router as users_router
@@ -19,18 +20,18 @@ api_router.include_router(
     tags=["Users"],
 )
 
+api_router.include_router(
+    indicators_router,
+    prefix="/indicators",
+    tags=["Indicators"],
+)
+
 """
 
 api_router.include_router(
     auth_router,
     prefix="/auth",
     tags=["Auth"],
-)
-
-api_router.include_router(
-    indicators_router,
-    prefix="/indicators",
-    tags=["Indicators"],
 )
 
 api_router.include_router(
