@@ -11,6 +11,7 @@
 	back-dev back-lock back-lint back-lint-fix back-format back-format-check \
 	back-check back-test back-test-verbose back-test-coverage \
 	back-migration back-migrate back-migrate-down back-migrations \
+	back-migration-current back-migration-heads back-migration-check \
 	front-dev front-lint front-lint-fix front-format front-format-check \
 	front-check front-build front-test front-test-watch front-e2e \
 	lint lint-fix format format-check check-all test test-all \
@@ -250,7 +251,7 @@ back-migration:
 		echo 'Exemplo: make back-migration m="create users table"'; \
 		exit 1; \
 	fi
-	@$(BACK_RUN) alembic revision --autogenerate -m "$(m)"
+	@$(BACK_RUN) python scripts/create_migration.py "$(m)"
 
 back-migrate:
 	@$(BACK_RUN) alembic upgrade head
@@ -260,6 +261,15 @@ back-migrate-down:
 
 back-migrations:
 	@$(BACK_RUN) alembic history
+
+back-migration-current:
+	@$(BACK_RUN) alembic current
+
+back-migration-heads:
+	@$(BACK_RUN) alembic heads
+
+back-migration-check:
+	@$(BACK_RUN) alembic check
 
 
 # ==========================================
