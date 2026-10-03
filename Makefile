@@ -11,6 +11,7 @@
 	back-dev back-lock back-lint back-lint-fix back-format back-format-check \
 	back-check back-test back-test-verbose back-test-coverage \
 	back-migration back-migrate back-migrate-down back-migrations \
+	back-test-migrate \
 	back-migration-current back-migration-heads back-migration-check \
 	front-dev front-lint front-lint-fix front-format front-format-check \
 	front-check front-build front-test front-test-watch front-e2e \
@@ -70,6 +71,7 @@ help:
 	@echo "  make back-migration       Cria migration (m=\"mensagem\")"
 	@echo "  make back-migrate         Aplica migrations"
 	@echo "  make back-migrate-down    Reverte última migration"
+	@echo "  make back-test-migrate    Aplica migrations no banco de testes"
 	@echo "  make back-migrations      Exibe histórico de migrations"
 	@echo ""
 	@echo "Frontend"
@@ -258,6 +260,9 @@ back-migrate:
 
 back-migrate-down:
 	@$(BACK_RUN) alembic downgrade -1
+
+back-test-migrate:
+	@$(BACK_RUN) python -m scripts.migrate_test_db
 
 back-migrations:
 	@$(BACK_RUN) alembic history
