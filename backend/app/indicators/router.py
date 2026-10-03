@@ -1,70 +1,108 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Query, Response
+from fastapi import status as http_status
 
-from app.core.dependencies import get_db
-from app.indicators import models, schemas
+from app.core.dependencies import DbSession
+from app.indicators.models import Indicator, IndicatorStatus
 from app.indicators.repository import IndicatorRepository
+from app.indicators.schemas import (
+    IndicatorCreate,
+    IndicatorResponse,
+    IndicatorUpdate,
+)
 from app.indicators.service import IndicatorService
 
-router = APIRouter()
 
-DbDep = Annotated[Session, Depends(get_db)]
-
-
-def get_indicator_service(db: DbDep) -> IndicatorService:
-    repo = IndicatorRepository(db)
-    return IndicatorService(repo)
+def get_indicator_service(db: DbSession) -> IndicatorService:
+    return IndicatorService(IndicatorRepository(db))
 
 
 ServiceDep = Annotated[IndicatorService, Depends(get_indicator_service)]
 
+PeriodQuery = Annotated[
+    str | None,
+    Query(description="Filtrar por período (ex: 2026)"),
+]
+SectorQuery = Annotated[
+    str | None,
+    Query(description="Filtrar por setor (ex: Hospedagem)"),
+]
 
-@router.get("", response_model=list[schemas.IndicatorResponse])
+# Leitura pública (/api/v1/indicators): retorna SOMENTE indicadores PUBLISHED.
+# Rascunhos nunca são expostos por estas rotas, independentemente dos parâmetros.
+router = APIRouter(tags=["Indicators"])
+
+# Rotas administrativas (/api/v1/admin/indicators): leitura de qualquer status e
+# toda alteração. O prefixo é aplicado pelo agregador em app/api/v1/router.py.
+admin_router = APIRouter(tags=["Indicators (admin)"])
+
+
+@router.get("", response_model=list[IndicatorResponse])
 def list_indicators(
     service: ServiceDep,
-    period: Annotated[
-        str | None, Query(description="Filtrar por período (ex: 2026)")
-    ] = None,
-    sector: Annotated[
-        str | None, Query(description="Filtrar por setor (ex: Hospedagem)")
-    ] = None,
+    period: PeriodQuery = None,
+    sector: SectorQuery = None,
+) -> list[Indicator]:
+    return service.list_published(period, sector)
+
+
+@router.get("/{indicator_id}", response_model=IndicatorResponse)
+def get_indicator(indicator_id: int, service: ServiceDep) -> Indicator:
+    return service.get_published(indicator_id)
+
+
+@admin_router.get("", response_model=list[IndicatorResponse])
+def admin_list_indicators(
+    service: ServiceDep,
+    period: PeriodQuery = None,
+    sector: SectorQuery = None,
     status: Annotated[
-        models.IndicatorStatus | None,
-        Query(description="O dashboard público deve passar ?status=PUBLISHED"),
+        IndicatorStatus | None,
+        Query(description="Filtrar por status (DRAFT ou PUBLISHED)"),
     ] = None,
-):
-    return service.get_indicators(period, sector, status)
+) -> list[Indicator]:
+    return service.list_indicators(period, sector, status)
 
 
-@router.get("/{id}", response_model=schemas.IndicatorResponse)
-def get_indicator(id: int, service: ServiceDep):
-    return service.get_indicator_by_id(id)
+@admin_router.get("/{indicator_id}", response_model=IndicatorResponse)
+def admin_get_indicator(indicator_id: int, service: ServiceDep) -> Indicator:
+    return service.get_indicator(indicator_id)
 
 
-@router.post(
-    "", response_model=schemas.IndicatorResponse, status_code=status.HTTP_201_CREATED
+@admin_router.post(
+    "",
+    response_model=IndicatorResponse,
+    status_code=http_status.HTTP_201_CREATED,
 )
-def create_indicator(data: schemas.IndicatorCreate, service: ServiceDep):
+def create_indicator(data: IndicatorCreate, service: ServiceDep) -> Indicator:
     return service.create_indicator(data)
 
 
-@router.put("/{id}", response_model=schemas.IndicatorResponse)
-def update_indicator(id: int, data: schemas.IndicatorUpdate, service: ServiceDep):
-    return service.update_indicator(id, data)
+@admin_router.put("/{indicator_id}", response_model=IndicatorResponse)
+def update_indicator(
+    indicator_id: int,
+    data: IndicatorUpdate,
+    service: ServiceDep,
+) -> Indicator:
+    return service.update_indicator(indicator_id, data)
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_indicator(id: int, service: ServiceDep):
-    service.delete_indicator(id)
+@admin_router.delete(
+    "/{indicator_id}",
+    status_code=http_status.HTTP_204_NO_CONTENT,
+)
+def delete_indicator(indicator_id: int, service: ServiceDep) -> Response:
+    service.delete_indicator(indicator_id)
+
+    return Response(status_code=http_status.HTTP_204_NO_CONTENT)
 
 
-@router.patch("/{id}/publish", response_model=schemas.IndicatorResponse)
-def publish_indicator(id: int, service: ServiceDep):
-    return service.change_status(id, models.IndicatorStatus.PUBLISHED)
+@admin_router.patch("/{indicator_id}/publish", response_model=IndicatorResponse)
+def publish_indicator(indicator_id: int, service: ServiceDep) -> Indicator:
+    return service.change_status(indicator_id, IndicatorStatus.PUBLISHED)
 
 
-@router.patch("/{id}/unpublish", response_model=schemas.IndicatorResponse)
-def unpublish_indicator(id: int, service: ServiceDep):
-    return service.change_status(id, models.IndicatorStatus.DRAFT)
+@admin_router.patch("/{indicator_id}/unpublish", response_model=IndicatorResponse)
+def unpublish_indicator(indicator_id: int, service: ServiceDep) -> Indicator:
+    return service.change_status(indicator_id, IndicatorStatus.DRAFT)

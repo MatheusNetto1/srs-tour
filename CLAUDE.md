@@ -22,6 +22,7 @@ make front-check        # biome check .
 
 make test               # pytest + vitest
 make test-all           # inclui Playwright E2E (inicia o Vite automaticamente)
+make back-test-migrate  # aplica as migrations no banco de TEST_DATABASE_URL; make back-test não executa migrations
 
 make back-migration m="create users table"   # autogenerate + renomeia para 0002_create_users_table.py
 make back-migrate                            # alembic upgrade head
@@ -42,18 +43,18 @@ Observação: o README cita `make front-fix`, mas o alvo real é `make front-lin
 
 - `backend/app/core/config.py` usa `pydantic-settings` lendo `backend/.env` (copiar de `.env.example`). `DATABASE_URL` e `SECRET_KEY` são obrigatórios; importar qualquer módulo de `app` sem eles falha.
 - No Docker Compose, `DATABASE_URL` é sobrescrito para apontar para o host `db`.
-- **Testes exigem um PostgreSQL real**: `tests/conftest.py` aborta se `TEST_DATABASE_URL` não estiver definido ou se o nome do banco não terminar em `_test`. Como o conftest é carregado em toda a suíte, até `test_health.py` depende disso. O banco de teste precisa estar migrado (`alembic upgrade head` apontando para ele — o CI faz isso usando `DATABASE_URL` = banco de teste).
+- **Testes exigem um PostgreSQL real**: `tests/conftest.py` aborta se `TEST_DATABASE_URL` não estiver definido ou se o nome do banco não terminar em `_test`. Como o conftest é carregado em toda a suíte, até `test_health.py` depende disso. O banco de teste precisa existir e estar migrado: use `make back-test-migrate` (o CI faz o equivalente com `alembic upgrade head`).
 - O fixture `db_session` usa sessões reais com commit e faz limpeza ao final com `DELETE` explícito por tabela. **Ao criar um novo model, adicione a limpeza da tabela correspondente no `db_session`**, senão os dados vazam entre testes. O fixture `client` substitui `get_db` via `app.dependency_overrides`.
 
 ## Arquitetura do backend
 
 - `app/main.py` cria o app, expõe `GET /health` e monta `api_router` em `/api/v1`.
-- `app/api/v1/router.py` agrega os routers de cada domínio com prefixo e tag. Há routers planejados comentados (auth, users, indicators, reports) — o padrão é um pacote por domínio em `app/<dominio>/`.
+- `app/api/v1/router.py` agrega os routers de cada domínio com prefixo e tag. Estão registrados `tourism`, `users` e `indicators`; `auth` e `reports` continuam planejados e comentados — o padrão é um pacote por domínio em `app/<dominio>/`.
 - Cada domínio segue camadas fixas (ver `app/tourism/`):
   - `models.py` — models SQLAlchemy 2 (`Mapped`/`mapped_column`) herdando de `app.core.database.Base`.
   - `schemas.py` — Pydantic: `XCreate`, `XUpdate`, `XResponse` (`from_attributes=True`).
   - `repository.py` — acesso a dados puro; recebe `Session`, faz `commit`/`refresh`.
-  - `service.py` — regras de negócio; lança `HTTPException` (ex.: 404) e chama o repository.
+  - `service.py` — regras de negócio; chama o repository e lança exceções de domínio, sem depender de FastAPI/HTTP. Elas herdam de `NotFoundError`/`ConflictError` (`app/core/errors.py`), ficam em `exceptions.py` do domínio com um `code` estável (ex.: `user.not_found`), e o handler global as converte em 404/409. As mensagens HTTP (PT-BR) ficam centralizadas em `app/core/messages.py`. `tourism` ainda usa `HTTPException` diretamente (padrão antigo); Users e Indicators seguem o padrão de exceções de domínio.
   - `router.py` — endpoints finos que recebem `db: DbSession` (de `app/core/dependencies.py`) e delegam ao service.
 - **Novos models devem ser importados em `app/models.py`**: é esse módulo que `alembic/env.py` importa para que o autogenerate enxergue o metadata.
 - Migrations usam numeração sequencial (`0001_...py`) gerada por `scripts/create_migration.py`; use `make back-migration` em vez de `alembic revision` direto.
@@ -129,6 +130,13 @@ Backend:
 - Não mockar o banco nos testes de integração; eles usam PostgreSQL real através de `TEST_DATABASE_URL`.
 - Todo teste deve ser independente da ordem de execução.
 - Dados criados por um teste não podem ser necessários para outro teste.
+- Organização: testes de integração ficam em `backend/tests/integration/<dominio>/test_<recurso>.py`; testes unitários (sem banco) em `backend/tests/unit/<modulo>/`. O teste de health fica em `backend/tests/test_health.py`.
+- Testes de integração usam as fixtures compartilhadas `client` e `db_session` de `tests/conftest.py`. Não crie `TestClient(app)`, engines ou sessões próprias nos módulos de teste, e não use SQLite, `Base.metadata.create_all()` ou `drop_all()` no lugar do PostgreSQL migrado.
+- O schema do banco de teste é aplicado separadamente por `make back-test-migrate`, que usa somente `TEST_DATABASE_URL` (nunca `DATABASE_URL`) e recusa bancos que não terminem em `_test`. O `make back-test` não executa migrations: rode `make back-test-migrate` depois de criar ou alterar migrations.
+- Todo novo model deve entrar no cleanup do `db_session` (ver "Configuração e banco de dados"). `make back-test` deve poder ser executado várias vezes seguidas sem acumular dados.
+- Asserts de status HTTP usam `from fastapi import status` e `status.HTTP_*` (por exemplo `status.HTTP_201_CREATED`, `status.HTTP_422_UNPROCESSABLE_CONTENT`), nunca números literais.
+- Estilo dos módulos de integração: constante `BASE_URL` com o path do recurso, helpers de módulo (`create_<entidade>(client, ...)`) em vez de fixtures de entidade, e testes anotados com `client: TestClient` e `-> None`.
+- Quando o comportamento envolve persistência (hash de senha, normalização, exclusão lógica), confirme também no banco via `db_session`. Como `client` e `db_session` compartilham a mesma sessão, use `db_session.expire_all()` quando o teste precisar garantir que observa o estado recarregado do PostgreSQL e não o identity map da sessão (não é obrigatório em toda releitura).
 
 Frontend:
 

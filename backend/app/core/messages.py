@@ -2,6 +2,7 @@ DEFAULT_LOCALE = "pt-BR"
 
 MESSAGES: dict[str, dict[str, str]] = {
     "pt-BR": {
+        "indicator.not_found": "Indicador não encontrado.",
         "user.not_found": "Usuário não encontrado.",
         "user.email_already_exists": "Já existe um usuário com este e-mail.",
     },

@@ -1,44 +1,77 @@
-from fastapi import HTTPException, status
-
+from app.indicators.exceptions import IndicatorNotFoundError
 from app.indicators.models import Indicator, IndicatorStatus
 from app.indicators.repository import IndicatorRepository
 from app.indicators.schemas import IndicatorCreate, IndicatorUpdate
 
 
 class IndicatorService:
-    def __init__(self, repo: IndicatorRepository):
+    def __init__(self, repo: IndicatorRepository) -> None:
         self.repo = repo
+
+    # Leitura pública: expõe somente indicadores PUBLISHED.
+
+    def list_published(
+        self,
+        period: str | None = None,
+        sector: str | None = None,
+    ) -> list[Indicator]:
+        return self.repo.get_all(
+            period=period,
+            sector=sector,
+            status=IndicatorStatus.PUBLISHED,
+        )
+
+    def get_published(self, indicator_id: int) -> Indicator:
+        indicator = self.repo.get_by_id(indicator_id)
+
+        if indicator is None or indicator.status != IndicatorStatus.PUBLISHED:
+            raise IndicatorNotFoundError
+
+        return indicator
+
+    # Operações administrativas: enxergam indicadores em qualquer status.
+
+    def list_indicators(
+        self,
+        period: str | None = None,
+        sector: str | None = None,
+        status: IndicatorStatus | None = None,
+    ) -> list[Indicator]:
+        return self.repo.get_all(period=period, sector=sector, status=status)
+
+    def get_indicator(self, indicator_id: int) -> Indicator:
+        indicator = self.repo.get_by_id(indicator_id)
+
+        if indicator is None:
+            raise IndicatorNotFoundError
+
+        return indicator
 
     def create_indicator(self, data: IndicatorCreate) -> Indicator:
         return self.repo.create(data)
 
-    def get_indicators(
-        self, period: str | None, sector: str | None, status: IndicatorStatus | None
-    ) -> list[Indicator]:
-        return self.repo.get_all(period=period, sector=sector, status=status)
+    def update_indicator(
+        self,
+        indicator_id: int,
+        data: IndicatorUpdate,
+    ) -> Indicator:
+        indicator = self.get_indicator(indicator_id)
 
-    def get_indicator_by_id(self, indicator_id: int) -> Indicator:
-        obj = self.repo.get_by_id(indicator_id)
-        if not obj:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Indicador não encontrado.",
-            )
-        return obj
-
-    def update_indicator(self, indicator_id: int, data: IndicatorUpdate) -> Indicator:
-        obj = self.get_indicator_by_id(indicator_id)
-        update_data = data.model_dump(exclude_unset=True)
-        return self.repo.update(obj, update_data)
+        return self.repo.update(indicator, data.model_dump())
 
     def delete_indicator(self, indicator_id: int) -> None:
-        obj = self.get_indicator_by_id(indicator_id)
-        self.repo.delete(obj)
+        indicator = self.get_indicator(indicator_id)
+
+        self.repo.delete(indicator)
 
     def change_status(
-        self, indicator_id: int, new_status: IndicatorStatus
+        self,
+        indicator_id: int,
+        new_status: IndicatorStatus,
     ) -> Indicator:
-        obj = self.get_indicator_by_id(indicator_id)
-        if obj.status == new_status:
-            return obj
-        return self.repo.update(obj, {"status": new_status})
+        indicator = self.get_indicator(indicator_id)
+
+        if indicator.status == new_status:
+            return indicator
+
+        return self.repo.update(indicator, {"status": new_status})
