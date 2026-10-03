@@ -2,15 +2,18 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, delete
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
 from app.core.dependencies import get_db
 from app.main import app
+from app.tourism.models import TourismEstablishment
 
 if settings.test_database_url is None:
-    raise RuntimeError("TEST_DATABASE_URL must be configured to run integration tests.")
+    raise RuntimeError(
+        "TEST_DATABASE_URL must be configured to run integration tests."
+    )
 
 TEST_DATABASE_URL = settings.test_database_url
 
@@ -24,24 +27,21 @@ test_engine = create_engine(
     pool_pre_ping=True,
 )
 
+TestingSessionLocal = sessionmaker(
+    bind=test_engine,
+    autoflush=False,
+    expire_on_commit=False,
+)
+
 
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
-    connection = test_engine.connect()
-    transaction = connection.begin()
-
-    session = Session(
-        bind=connection,
-        expire_on_commit=False,
-        join_transaction_mode="create_savepoint",
-    )
-
-    try:
+    with TestingSessionLocal() as session:
         yield session
-    finally:
-        session.close()
-        transaction.rollback()
-        connection.close()
+
+        session.rollback()
+        session.execute(delete(TourismEstablishment))
+        session.commit()
 
 
 @pytest.fixture
@@ -53,7 +53,8 @@ def client(
 
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as test_client:
-        yield test_client
-
-    app.dependency_overrides.clear()
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
