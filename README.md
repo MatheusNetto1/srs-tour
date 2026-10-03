@@ -105,6 +105,12 @@ Os serviços ficam disponíveis em:
   Swagger      `http://localhost:8000/docs`
   PostgreSQL   `localhost:5432`
 
+> Se a porta `5432` já estiver em uso na sua máquina, defina outra porta
+> externa para o PostgreSQL, por exemplo `POSTGRES_HOST_PORT=5434 make up`
+> (ou em um arquivo `.env` na raiz). Ajuste também `DATABASE_URL` e
+> `TEST_DATABASE_URL` em `backend/.env` ao executar o backend fora do Docker.
+> A comunicação entre containers continua usando `db:5432`.
+
 Para encerrar os serviços:
 
 ``` bash

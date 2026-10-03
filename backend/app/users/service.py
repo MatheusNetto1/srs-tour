@@ -3,16 +3,12 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.users import repository
+from app.users.exceptions import (
+    UserEmailAlreadyExistsError,
+    UserNotFoundError,
+)
 from app.users.models import User
 from app.users.schemas import UserCreate, UserUpdate
-
-
-class UserNotFoundError(Exception):
-    pass
-
-
-class UserEmailAlreadyExistsError(Exception):
-    pass
 
 
 def normalize_email(email: str) -> str:
@@ -44,20 +40,17 @@ def create_user(db: Session, data: UserCreate) -> User:
         raise UserEmailAlreadyExistsError
 
     user = User(
-        name=data.name.strip(),
+        name=data.name,
         email=normalized_email,
         password_hash=hash_password(data.password),
         is_active=True,
     )
 
     try:
-        repository.add_user(db, user)
-        db.commit()
+        return repository.add_user(db, user)
     except IntegrityError as error:
         db.rollback()
         raise UserEmailAlreadyExistsError from error
-
-    return user
 
 
 def update_user(
@@ -76,27 +69,33 @@ def update_user(
     if existing_user is not None and existing_user.id != user.id:
         raise UserEmailAlreadyExistsError
 
-    user.name = data.name.strip()
+    user.name = data.name
     user.email = normalized_email
-    user.is_active = data.is_active
 
     if data.password is not None:
         user.password_hash = hash_password(data.password)
 
     try:
-        repository.update_user(db, user)
-        db.commit()
+        return repository.update_user(db, user)
     except IntegrityError as error:
         db.rollback()
         raise UserEmailAlreadyExistsError from error
 
-    return user
+
+def activate_user(db: Session, user_id: int) -> User:
+    return _set_active(db, user_id, is_active=True)
 
 
-def deactivate_user(db: Session, user_id: int) -> None:
+def deactivate_user(db: Session, user_id: int) -> User:
+    return _set_active(db, user_id, is_active=False)
+
+
+def _set_active(db: Session, user_id: int, *, is_active: bool) -> User:
     user = get_user(db, user_id)
 
-    user.is_active = False
+    if user.is_active == is_active:
+        return user
 
-    repository.update_user(db, user)
-    db.commit()
+    user.is_active = is_active
+
+    return repository.update_user(db, user)

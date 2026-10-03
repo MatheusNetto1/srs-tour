@@ -1,23 +1,28 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
+
+UserName = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=2, max_length=120),
+]
 
 
 class UserCreate(BaseModel):
-    name: str = Field(min_length=2, max_length=120)
+    name: UserName
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
 
 
 class UserUpdate(BaseModel):
-    name: str = Field(min_length=2, max_length=120)
+    name: UserName
     email: EmailStr
     password: str | None = Field(
         default=None,
         min_length=8,
         max_length=128,
     )
-    is_active: bool
 
 
 class UserResponse(BaseModel):
@@ -25,7 +30,7 @@ class UserResponse(BaseModel):
 
     id: int
     name: str
-    email: EmailStr
+    email: str
     is_active: bool
     created_at: datetime
     updated_at: datetime

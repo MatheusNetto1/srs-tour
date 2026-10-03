@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.dependencies import get_db
 from app.main import app
 from app.tourism.models import TourismEstablishment
+from app.users.models import User
 
 if settings.test_database_url is None:
     raise RuntimeError("TEST_DATABASE_URL must be configured to run integration tests.")
@@ -39,6 +40,7 @@ def db_session() -> Generator[Session, None, None]:
 
         session.rollback()
         session.execute(delete(TourismEstablishment))
+        session.execute(delete(User))
         session.commit()
 
 

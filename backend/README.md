@@ -110,6 +110,24 @@ poetry run ruff format .
 
 ## Testes
 
+Os testes de integração usam um PostgreSQL real e exigem a variável
+`TEST_DATABASE_URL` (veja `.env.example`) apontando para um banco cujo nome
+termine em `_test`, por exemplo `srs_tour_test`.
+
+Antes da primeira execução, e sempre que houver novas migrations, prepare o
+banco de testes (o banco precisa existir; o comando apenas aplica as
+migrations nele):
+
+``` bash
+make back-test-migrate
+```
+
+Esse comando usa somente `TEST_DATABASE_URL`, nunca `DATABASE_URL`, e falha
+se a variável não estiver configurada ou se o banco não terminar em `_test`.
+O `make back-test` não executa migrations automaticamente.
+
+Para executar os testes:
+
 ``` bash
 make back-test
 ```

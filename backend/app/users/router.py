@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Response, status
 
 from app.core.dependencies import DbSession
 from app.users import service
@@ -24,13 +24,7 @@ def get_user(
     user_id: int,
     db: DbSession,
 ) -> User:
-    try:
-        return service.get_user(db, user_id)
-    except service.UserNotFoundError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado.",
-        ) from error
+    return service.get_user(db, user_id)
 
 
 @router.post(
@@ -42,13 +36,7 @@ def create_user(
     data: UserCreate,
     db: DbSession,
 ) -> User:
-    try:
-        return service.create_user(db, data)
-    except service.UserEmailAlreadyExistsError as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Já existe um usuário com este e-mail.",
-        ) from error
+    return service.create_user(db, data)
 
 
 @router.put(
@@ -60,18 +48,18 @@ def update_user(
     data: UserUpdate,
     db: DbSession,
 ) -> User:
-    try:
-        return service.update_user(db, user_id, data)
-    except service.UserNotFoundError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado.",
-        ) from error
-    except service.UserEmailAlreadyExistsError as error:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Já existe um usuário com este e-mail.",
-        ) from error
+    return service.update_user(db, user_id, data)
+
+
+@router.post(
+    "/{user_id}/activate",
+    response_model=UserResponse,
+)
+def activate_user(
+    user_id: int,
+    db: DbSession,
+) -> User:
+    return service.activate_user(db, user_id)
 
 
 @router.delete(
@@ -82,12 +70,6 @@ def deactivate_user(
     user_id: int,
     db: DbSession,
 ) -> Response:
-    try:
-        service.deactivate_user(db, user_id)
-    except service.UserNotFoundError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado.",
-        ) from error
+    service.deactivate_user(db, user_id)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
