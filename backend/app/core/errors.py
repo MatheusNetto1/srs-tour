@@ -1,4 +1,9 @@
+import math
+from typing import Any
+
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.core.messages import get_message
@@ -43,5 +48,32 @@ async def domain_error_handler(
     )
 
 
+def _json_safe(value: Any) -> Any:
+    """Replace NaN/Infinity, which JSON responses cannot represent, by text."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return str(value)
+
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+
+    if isinstance(value, list | tuple):
+        return [_json_safe(item) for item in value]
+
+    return value
+
+
+async def request_validation_error_handler(
+    request: Request,
+    error: RequestValidationError,
+) -> JSONResponse:
+    # Mesmo formato do handler padrão do FastAPI, mas sem quebrar (500) quando o
+    # valor rejeitado ecoado em `input` é NaN ou infinito.
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": jsonable_encoder(_json_safe(error.errors()))},
+    )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(DomainError, domain_error_handler)
+    app.add_exception_handler(RequestValidationError, request_validation_error_handler)

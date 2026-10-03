@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
 from app.core.dependencies import get_db
+from app.indicators.models import Indicator
 from app.main import app
 from app.tourism.models import TourismEstablishment
 from app.users.models import User
@@ -39,6 +40,7 @@ def db_session() -> Generator[Session, None, None]:
         yield session
 
         session.rollback()
+        session.execute(delete(Indicator))
         session.execute(delete(TourismEstablishment))
         session.execute(delete(User))
         session.commit()
