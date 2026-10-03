@@ -11,9 +11,7 @@ from app.main import app
 from app.tourism.models import TourismEstablishment
 
 if settings.test_database_url is None:
-    raise RuntimeError(
-        "TEST_DATABASE_URL must be configured to run integration tests."
-    )
+    raise RuntimeError("TEST_DATABASE_URL must be configured to run integration tests.")
 
 TEST_DATABASE_URL = settings.test_database_url
 
