@@ -1,0 +1,73 @@
+# ==========================================
+# SRS Tour - Pull Request Labeler
+# ==========================================
+
+"area: backend":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "backend/**"
+
+"area: frontend":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "frontend/**"
+
+"area: ci":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+
+"area: docker":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/Dockerfile"
+          - "**/Dockerfile.*"
+          - "compose.yml"
+          - "compose.yaml"
+          - "docker-compose.yml"
+          - "docker-compose.yaml"
+
+"area: docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+
+"area: tooling":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Makefile"
+          - "**/Makefile"
+          - "backend/pyproject.toml"
+          - "backend/poetry.lock"
+          - "frontend/package.json"
+          - "frontend/package-lock.json"
+          - "frontend/biome.json"
+          - "frontend/tsconfig*.json"
+          - "frontend/vite.config.*"
+          - "frontend/vitest.config.*"
+          - "frontend/playwright.config.*"
+
+"area: dependencies":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "backend/pyproject.toml"
+          - "backend/poetry.lock"
+          - "frontend/package.json"
+          - "frontend/package-lock.json"
+
+"area: database":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "backend/**/models/**"
+          - "backend/**/migrations/**"
+          - "backend/alembic/**"
+          - "backend/alembic.ini"
+
+"area: api":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "backend/**/routers/**"
+          - "backend/**/routes/**"
+          - "backend/**/api/**"
+          - "backend/**/schemas/**"
