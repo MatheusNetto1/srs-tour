@@ -23,9 +23,14 @@ class ConflictError(DomainError):
     code = "conflict"
 
 
+class UnauthorizedError(DomainError):
+    code = "unauthorized"
+
+
 ERROR_STATUS_CODES: dict[type[DomainError], int] = {
     NotFoundError: status.HTTP_404_NOT_FOUND,
     ConflictError: status.HTTP_409_CONFLICT,
+    UnauthorizedError: status.HTTP_401_UNAUTHORIZED,
 }
 
 
@@ -42,9 +47,17 @@ async def domain_error_handler(
         status.HTTP_400_BAD_REQUEST,
     )
 
+    # O esquema Bearer exige o cabeçalho WWW-Authenticate em toda resposta 401.
+    headers = (
+        {"WWW-Authenticate": "Bearer"}
+        if status_code == status.HTTP_401_UNAUTHORIZED
+        else None
+    )
+
     return JSONResponse(
         status_code=status_code,
         content={"detail": get_message(error.code)},
+        headers=headers,
     )
 
 
