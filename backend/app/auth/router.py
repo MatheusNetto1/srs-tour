@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.auth import service
@@ -21,14 +21,7 @@ def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: DbSession,
 ) -> Token:
-    try:
-        return service.login(db, form_data.username, form_data.password)
-    except service.InvalidCredentialsError as error:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="E-mail ou senha inválidos.",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from error
+    return service.login(db, form_data.username, form_data.password)
 
 
 @router.get(

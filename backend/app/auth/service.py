@@ -1,6 +1,9 @@
+from functools import lru_cache
+
 import jwt
 from sqlalchemy.orm import Session
 
+from app.auth.exceptions import InvalidCredentialsError, InvalidTokenError
 from app.auth.schemas import Token
 from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
@@ -8,17 +11,16 @@ from app.users import repository as users_repository
 from app.users.models import User
 from app.users.service import normalize_email
 
-# Hash usado quando o e-mail não existe, para que o tempo de resposta
-# não revele quais e-mails estão cadastrados.
-DUMMY_PASSWORD_HASH = hash_password("dummy-password-for-timing")
+# Mesmo teto de UserCreate: senhas maiores nunca foram cadastradas, e recusá-las
+# antes do argon2 evita gastar CPU com corpos enormes.
+PASSWORD_MAX_LENGTH = 128
 
 
-class InvalidCredentialsError(Exception):
-    pass
-
-
-class InvalidTokenError(Exception):
-    pass
+@lru_cache
+def get_dummy_password_hash() -> str:
+    # Hash usado quando o e-mail não existe, para que o tempo de resposta
+    # não revele quais e-mails estão cadastrados.
+    return hash_password("dummy-password-for-timing")
 
 
 def authenticate_user(
@@ -26,13 +28,16 @@ def authenticate_user(
     email: str,
     password: str,
 ) -> User:
+    if len(password) > PASSWORD_MAX_LENGTH:
+        raise InvalidCredentialsError
+
     user = users_repository.get_user_by_email(
         db,
         normalize_email(email),
     )
 
     if user is None:
-        verify_password(password, DUMMY_PASSWORD_HASH)
+        verify_password(password, get_dummy_password_hash())
         raise InvalidCredentialsError
 
     if not verify_password(password, user.password_hash):
@@ -73,7 +78,10 @@ def decode_access_token(token: str) -> int:
         raise InvalidTokenError from error
 
 
-def get_user_from_token(db: Session, token: str) -> User:
+def get_user_from_token(db: Session, token: str | None) -> User:
+    if token is None:
+        raise InvalidTokenError
+
     user_id = decode_access_token(token)
 
     user = users_repository.get_user_by_id(db, user_id)
