@@ -1,7 +1,7 @@
 """create reports table
 
 Revision ID: a3f1c9d27b64
-Revises:
+Revises: 9ccc73c8c1c9
 Create Date: 2026-10-01 20:00:00.000000
 
 """
@@ -14,9 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "a3f1c9d27b64"
-# ATENÇÃO: depois que a migration do Users (d889579567c9) entrar na base,
-# trocar para: down_revision = "d889579567c9" (evita duas heads no Alembic).
-down_revision: str | Sequence[str] | None = None
+down_revision: str | Sequence[str] | None = "9ccc73c8c1c9"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
