@@ -49,17 +49,17 @@ Observação: o README cita `make front-fix`, mas o alvo real é `make front-lin
 ## Arquitetura do backend
 
 - `app/main.py` cria o app, expõe `GET /health` e monta `api_router` em `/api/v1`.
-- `app/api/v1/router.py` agrega os routers de cada domínio com prefixo e tag. Estão registrados `tourism`, `users` e `indicators`; `auth` e `reports` continuam planejados e comentados — o padrão é um pacote por domínio em `app/<dominio>/`.
+- `app/api/v1/router.py` agrega os routers de cada domínio com prefixo e tag. Estão registrados `auth`, `tourism`, `users` e `indicators`; `reports` continua planejado e comentado — o padrão é um pacote por domínio em `app/<dominio>/`.
 - Cada domínio segue camadas fixas (ver `app/tourism/`):
   - `models.py` — models SQLAlchemy 2 (`Mapped`/`mapped_column`) herdando de `app.core.database.Base`.
   - `schemas.py` — Pydantic: `XCreate`, `XUpdate`, `XResponse` (`from_attributes=True`).
   - `repository.py` — acesso a dados puro; recebe `Session`, faz `commit`/`refresh`.
-  - `service.py` — regras de negócio; chama o repository e lança exceções de domínio, sem depender de FastAPI/HTTP. Elas herdam de `NotFoundError`/`ConflictError` (`app/core/errors.py`), ficam em `exceptions.py` do domínio com um `code` estável (ex.: `user.not_found`), e o handler global as converte em 404/409. As mensagens HTTP (PT-BR) ficam centralizadas em `app/core/messages.py`. `tourism` ainda usa `HTTPException` diretamente (padrão antigo); Users e Indicators seguem o padrão de exceções de domínio.
+  - `service.py` — regras de negócio; chama o repository e lança exceções de domínio, sem depender de FastAPI/HTTP. Elas herdam de `NotFoundError`/`ConflictError`/`UnauthorizedError` (`app/core/errors.py`), ficam em `exceptions.py` do domínio com um `code` estável (ex.: `user.not_found`), e o handler global as converte em 404/409/401 (o 401 inclui `WWW-Authenticate: Bearer`). As mensagens HTTP (PT-BR) ficam centralizadas em `app/core/messages.py`. `tourism` ainda usa `HTTPException` diretamente (padrão antigo); Users e Indicators seguem o padrão de exceções de domínio.
   - `router.py` — endpoints finos que recebem `db: DbSession` (de `app/core/dependencies.py`) e delegam ao service.
 - **Novos models devem ser importados em `app/models.py`**: é esse módulo que `alembic/env.py` importa para que o autogenerate enxergue o metadata.
 - Migrations usam numeração sequencial (`0001_...py`) gerada por `scripts/create_migration.py`; use `make back-migration` em vez de `alembic revision` direto.
 - Exclusão de estabelecimentos é lógica (`DELETE` marca `is_active = False`).
-- `app/core/security.py` já contém hash de senha (pwdlib/argon2) e criação de JWT (PyJWT), ainda não usados por nenhuma rota.
+- `app/core/security.py` contém hash de senha (pwdlib/argon2) e criação de JWT (PyJWT), usados pelo módulo `auth` (`POST /api/v1/auth/login`, `GET /api/v1/auth/me`). Rotas protegidas recebem `current_user: CurrentUser` (de `app/auth/dependencies.py`). O login usa formulário OAuth2 e depende de `python-multipart` (rode `make install`/`poetry install` após atualizar a branch).
 - Ruff: line-length 88, regras `E, F, I, UP, B`, alvo py312.
 
 ## Frontend
