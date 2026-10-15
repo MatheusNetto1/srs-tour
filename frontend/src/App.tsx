@@ -1,9 +1,6 @@
-function App() {
-	return (
-		<main className="flex min-h-screen items-center justify-center">
-			<h1 className="text-4xl font-bold">SRS Tour</h1>
-		</main>
-	);
-}
+import { RouterProvider } from "react-router-dom";
+import { router } from "./routes/router";
 
-export default App;
+export function App() {
+	return <RouterProvider router={router} />;
+}
