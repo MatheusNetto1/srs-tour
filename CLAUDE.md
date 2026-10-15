@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Visão geral
 
-Monorepo full stack para turismo: `backend/` (FastAPI + SQLAlchemy 2 + Alembic + PostgreSQL, gerenciado com Poetry, `package-mode = false`) e `frontend/` (React 19 + Vite + Tailwind 4 + TypeScript, ainda praticamente um esqueleto). A documentação e as mensagens de commit do projeto são escritas em PT-BR.
+Monorepo full stack para turismo: `backend/` (FastAPI + SQLAlchemy 2 + Alembic + PostgreSQL, gerenciado com Poetry, `package-mode = false`) e `frontend/` (React 19 + Vite + Tailwind 4 + TypeScript, com React Router (`createBrowserRouter`), Recharts e lucide-react). A documentação e as mensagens de commit do projeto são escritas em PT-BR.
 
 ## Comandos
 
@@ -33,7 +33,7 @@ Executar um único teste:
 
 ```bash
 cd backend && poetry run pytest tests/integration/tourism/test_establishments.py::test_create_establishment
-cd frontend && npx vitest run src/App.test.tsx -t "nome do teste"
+cd frontend && npx vitest run tests/integration/router.test.ts -t "nome do teste"
 cd frontend && npx playwright test tests/e2e/home.spec.ts
 ```
 
@@ -65,12 +65,15 @@ Observação: o README cita `make front-fix`, mas o alvo real é `make front-lin
 ## Frontend
 
 - Biome para lint/format (indentação com tabs, aspas duplas, organize imports). Não usar ESLint/Prettier.
-- Vitest com jsdom e setup em `src/test/setup.ts`; testes E2E ficam em `tests/e2e/` e são excluídos do Vitest.
+- Vitest com jsdom e setup em `tests/setup/vitest.ts`; testes de integração/componentes ficam em `tests/integration/` (helpers em `tests/utils/`); testes E2E ficam em `tests/e2e/` (Playwright, URLs sem `#`) e são excluídos do Vitest.
+- `tsconfig.tests.json` faz o `tsc -b` (e portanto o `npm run build`) checar `src/` e `tests/`.
+- Rotas em `src/routes/router.tsx` (`createBrowserRouter`); produção precisará de fallback de SPA (pendente).
 
 ## CI e fluxo Git
 
 - `.github/workflows/backend-ci.yml` roda em PRs/push para `main` e `develop` quando `backend/**` muda: ruff lint + format check, pytest contra um serviço Postgres (`srs_tour_test`) após `alembic upgrade head`, e build da imagem Docker. Não há CI de frontend ainda.
 - `labeler.yml` rotula PRs automaticamente por área (`area: backend`, `area: frontend`, etc.).
+- `.gitattributes` (`* text=auto eol=lf`) mantém todos os arquivos em LF, mesmo com `core.autocrlf=true` no Windows; sem isso o Biome acusa erro de formatação (`␍`) em arquivos corretos.
 - Commits seguem Conventional Commits com escopo e descrição em PT-BR (ex.: `feat(tourism): adiciona CRUD de estabelecimentos turisticos`). Branches no formato `mn/<tipo>/<descricao>`.
 
 ## Regras para alterações
