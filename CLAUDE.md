@@ -68,6 +68,7 @@ Observação: o README cita `make front-fix`, mas o alvo real é `make front-lin
 - Vitest com jsdom e setup em `tests/setup/vitest.ts`; testes de integração/componentes ficam em `tests/integration/` (helpers em `tests/utils/`); testes E2E ficam em `tests/e2e/` (Playwright, URLs sem `#`) e são excluídos do Vitest.
 - `tsconfig.tests.json` faz o `tsc -b` (e portanto o `npm run build`) checar `src/` e `tests/`.
 - Rotas em `src/routes/router.tsx` (`createBrowserRouter`); produção precisará de fallback de SPA (pendente).
+- O projeto utiliza testes visuais de regressão com o Playwright para garantir paridade com o protótipo local (`npm run test:visual`). Os snapshots são isolados da CI por dependerem da renderização do sistema operacional. O baseline é obrigatoriamente extraído do protótipo e atualizado localmente via `npm run test:visual:update`.
 
 ## CI e fluxo Git
 
