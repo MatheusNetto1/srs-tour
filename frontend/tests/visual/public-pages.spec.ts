@@ -14,16 +14,18 @@ const viewports = [
 	{ name: "390x844", width: 390, height: 844 },
 ];
 
-for (const route of routes) {
-	for (const vp of viewports) {
+for (const vp of viewports) {
+	test.describe(`viewport ${vp.name}`, () => {
 		test.use({ viewport: { width: vp.width, height: vp.height } });
 
-		test(`Snapshot: ${route.name} (${vp.name})`, async ({ page }) => {
-			await page.goto(routeUrl(route.path));
-			await waitForStablePage(page);
-			await expect(page).toHaveScreenshot(`${route.name}__${vp.name}.png`, {
-				fullPage: true,
+		for (const route of routes) {
+			test(`Snapshot: ${route.name} (${vp.name})`, async ({ page }) => {
+				await page.goto(routeUrl(route.path));
+				await waitForStablePage(page);
+				await expect(page).toHaveScreenshot(`${route.name}__${vp.name}.png`, {
+					fullPage: true,
+				});
 			});
-		});
-	}
+		}
+	});
 }

@@ -9,8 +9,7 @@ export default defineConfig({
 	},
 	use: {
 		baseURL: process.env.VISUAL_BASE_URL ?? "http://localhost:5173",
-		// @ts-expect-error
-		reducedMotion: "reduce",
+		contextOptions: { reducedMotion: "reduce" },
 	},
 	projects: [
 		{
