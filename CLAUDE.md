@@ -68,7 +68,10 @@ Observação: o README cita `make front-fix`, mas o alvo real é `make front-lin
 - Vitest com jsdom e setup em `tests/setup/vitest.ts`; testes de integração/componentes ficam em `tests/integration/` (helpers em `tests/utils/`); testes E2E ficam em `tests/e2e/` (Playwright, URLs sem `#`) e são excluídos do Vitest.
 - `tsconfig.tests.json` faz o `tsc -b` (e portanto o `npm run build`) checar `src/` e `tests/`.
 - Rotas em `src/routes/router.tsx` (`createBrowserRouter`); produção precisará de fallback de SPA (pendente).
-- O projeto utiliza testes visuais de regressão com o Playwright para garantir paridade com o protótipo local (`npm run test:visual`). Os snapshots são isolados da CI por dependerem da renderização do sistema operacional. O baseline é obrigatoriamente extraído do protótipo e atualizado localmente via `npm run test:visual:update`.
+- Testes visuais de regressão ficam em `tests/visual/` (Playwright, config própria em `playwright.visual.config.ts`; `tests/e2e/` cobre comportamento, `tests/visual/` compara imagem) e são excluídos do Vitest. `npm run test:visual` compara o app local (modo path, o Vite sobe sozinho na 5173) com os 12 snapshots de `tests/visual/__screenshots__/` (4 rotas públicas × 1440x900, 768x1024 e 390x844).
+  - O baseline vem **somente do protótipo** (`origin/gh-pages/prototype`), nunca do `develop`. Para regerar: suba o protótipo (worktree `.dev/_prototype`, `npm ci`) na 5199 com `MSYS_NO_PATHCONV=1 npx vite --base / --port 5199 --strictPort` (no PowerShell, sem o prefixo) e rode, em `frontend/`, `VISUAL_BASE_URL=http://localhost:5199 VISUAL_ROUTE_MODE=hash npm run test:visual:update` (PowerShell: `$env:VISUAL_BASE_URL="http://localhost:5199"; $env:VISUAL_ROUTE_MODE="hash"; npm run test:visual:update`). Nunca rode `test:visual:update` sem essas variáveis.
+  - `--update-snapshots` (modo `changed`) só reescreve os snapshots que falham: um PNG ruim que esteja dentro da tolerância (`maxDiffPixelRatio: 0.001`) sobrevive à regeração. Para regerar o baseline inteiro, use `VISUAL_BASE_URL=http://localhost:5199 VISUAL_ROUTE_MODE=hash npx playwright test --config playwright.visual.config.ts --update-snapshots=all`.
+  - O teste visual roda só localmente e fica fora do CI (D10): a fonte do sistema renderiza diferente entre Windows e Linux, e os snapshots são gerados no Windows da equipe.
 
 ## CI e fluxo Git
 
