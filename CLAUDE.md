@@ -71,7 +71,8 @@ Observação: o README cita `make front-fix`, mas o alvo real é `make front-lin
 
 ## CI e fluxo Git
 
-- `.github/workflows/backend-ci.yml` roda em PRs/push para `main` e `develop` quando `backend/**` muda: ruff lint + format check, pytest contra um serviço Postgres (`srs_tour_test`) após `alembic upgrade head`, e build da imagem Docker. Não há CI de frontend ainda.
+- `.github/workflows/backend-ci.yml` roda em PRs/push para `main` e `develop` quando `backend/**` muda: ruff lint + format check, pytest contra um serviço Postgres (`srs_tour_test`) após `alembic upgrade head`, e build da imagem Docker.
+- `.github/workflows/frontend-ci.yml` roda em PRs/push para `main` e `develop` quando `frontend/**` muda: `npm ci`, Biome (`make front-check`), Vitest (`make front-test`) e build (`make front-build`, que roda `tsc -b` e checa também `tests/`). O teste visual e o E2E não rodam no CI.
 - `labeler.yml` rotula PRs automaticamente por área (`area: backend`, `area: frontend`, etc.).
 - `.gitattributes` (`* text=auto eol=lf`) mantém todos os arquivos em LF, mesmo com `core.autocrlf=true` no Windows; sem isso o Biome acusa erro de formatação (`␍`) em arquivos corretos.
 - Commits seguem Conventional Commits com escopo e descrição em PT-BR (ex.: `feat(tourism): adiciona CRUD de estabelecimentos turisticos`). Branches no formato `mn/<tipo>/<descricao>`.
