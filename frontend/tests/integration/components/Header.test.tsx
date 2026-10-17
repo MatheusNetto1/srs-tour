@@ -44,6 +44,9 @@ describe("Header", () => {
 		});
 
 		expect(activeLink).toHaveClass("text-brand-blue");
+		expect(
+			within(navigation).getByRole("link", { name: "Início" }),
+		).not.toHaveClass("text-brand-blue");
 	});
 
 	it("abre e fecha o menu mobile", () => {

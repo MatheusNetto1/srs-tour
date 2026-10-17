@@ -36,7 +36,11 @@ describe("Button", () => {
 			</Button>,
 		);
 
-		fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+		const button = screen.getByRole("button", { name: "Salvar" });
+
+		expect(button).toBeDisabled();
+
+		fireEvent.click(button);
 
 		expect(handleClick).not.toHaveBeenCalled();
 	});
