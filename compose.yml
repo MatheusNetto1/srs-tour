@@ -7,6 +7,12 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    # Em dev aplica as migrations antes de iniciar. DATABASE_URL (abaixo, host
+    # `db`) tem precedência sobre o .env, que aponta para localhost.
+    command:
+      - sh
+      - -c
+      - alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - ./backend/.env
     environment:
@@ -38,6 +44,8 @@ services:
       - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Scripts executados só na primeira inicialização de um volume novo.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d srs_tour"]
       interval: 5s
