@@ -22,7 +22,7 @@
 	back-dev back-lock back-lint back-lint-fix back-format back-format-check \
 	back-check back-test back-test-verbose \
 	back-migration back-migrate back-migrate-down back-migrations \
-	back-test-migrate \
+	back-test-migrate back-test-migrate-only \
 	back-migration-current back-migration-heads back-migration-check \
 	seed \
 	front-dev front-lint front-lint-fix front-format front-format-check \
@@ -49,6 +49,9 @@ FRONT_RUN := cd $(FRONTEND_DIR) && npm run
 
 DB_USER ?= postgres
 TEST_DB_NAME ?= srs_tour_test
+
+# Argumentos extras do `playwright install`; no Linux/CI: --with-deps
+PLAYWRIGHT_INSTALL_ARGS ?=
 
 # Argumentos extras repassados aos alvos de teste: make back-test ARGS="-k nome"
 ARGS ?=
@@ -159,8 +162,8 @@ restart: ## Reinicia os containers (o backend reaplica as migrations)
 build: ## Faz build das imagens
 	@docker compose build
 
-rebuild: require-env ## Rebuilda as imagens e sobe os containers
-	@docker compose up -d --build
+rebuild: require-env ## Rebuilda as imagens e sobe os containers (renova o node_modules do frontend)
+	@docker compose up -d --build --renew-anon-volumes
 
 logs: ## Acompanha todos os logs
 	@docker compose logs -f
@@ -226,7 +229,9 @@ back-migrate: ## Aplica as migrations no banco de desenvolvimento
 back-migrate-down: ## Reverte a última migration
 	@$(BACK_RUN) alembic downgrade -1
 
-back-test-migrate: db-create-test ## Cria (se preciso) e migra o banco de teste
+back-test-migrate: db-create-test back-test-migrate-only ## Cria (se preciso) e migra o banco de teste
+
+back-test-migrate-only: ## Migra o banco de teste sem criá-lo (CI, onde o Postgres não é o Compose)
 	@$(BACK_RUN) python -m scripts.migrate_test_db
 
 back-migrations: ## Exibe o histórico de migrations
@@ -268,8 +273,8 @@ front-check: ## Verificação somente leitura: lint + formato + imports
 front-build: ## Gera o build de produção
 	@$(FRONT_RUN) build
 
-front-install-browsers: ## Instala o Chromium do Playwright (E2E e visual)
-	@cd $(FRONTEND_DIR) && npx playwright install chromium
+front-install-browsers: ## Instala o Chromium do Playwright (CI: PLAYWRIGHT_INSTALL_ARGS=--with-deps)
+	@cd $(FRONTEND_DIR) && npx playwright install $(PLAYWRIGHT_INSTALL_ARGS) chromium
 
 front-test: ## Executa o Vitest uma vez (ARGS="-t nome")
 	@$(FRONT_RUN) test:run -- $(ARGS)
