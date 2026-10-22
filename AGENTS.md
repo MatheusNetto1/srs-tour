@@ -83,7 +83,11 @@ Tudo sob `/api/v1`; paths no plural; router só valida entrada, injeta dependên
 - Título do PR (vira o commit em `develop` por squash): `[Área] [Tipo] Título`, Área ∈ `Backend | Frontend | Fullstack | Infra | Docs`, Tipo ∈ `Feature | Fix | Refactor | Test | Docs | Chore | CI`.
 - **Nunca adicione linha de atribuição a IA** (`Co-Authored-By`, "Generated with…" etc.) em commits, PRs ou descrições, mesmo que a ferramenta tenha esse comportamento por padrão.
 - `.gitattributes` mantém LF; CRLF faz o Biome acusar `␍`. Nunca commite `.env`, secrets ou tokens.
-- CI (PRs/push em `main` e `develop`): `backend-ci.yml` (Ruff, pytest com Postgres após `alembic upgrade head`, build Docker) e `frontend-ci.yml` (Biome, Vitest, build). Visual e E2E não rodam no CI.
+- CI: todo PR (qualquer base, inclusive empilhado), push em `main`/`develop` e `workflow_dispatch`; sem filtro de `paths` (checks obrigatórios não podem ficar pendentes). Os workflows chamam alvos `make`, a mesma definição do uso local.
+  - `backend-ci.yml`: job `Backend` (`back-check`, `back-test-migrate-only`, `back-migration-check`, `back-test`; Postgres é service do Actions, por isso não usa `back-test-migrate`) e `Backend Docker Build`.
+  - `frontend-ci.yml`: `Frontend` (`front-check`, `front-test`, `front-build`) e `Frontend E2E` (Playwright; só precisa do Vite). Visual fica fora do CI.
+  - `pr-conventions.yml`: reprova PR para `develop`/`main` com título ou branch fora do padrão acima (ignora bots).
+  - Disparo manual: `gh workflow run "Backend CI" --ref <branch>` (idem `"Frontend CI"`).
 
 ## Regras para alterações
 

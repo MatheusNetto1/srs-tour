@@ -292,6 +292,22 @@ make db-reset CONFIRM=1    # apaga o volume do Postgres e recria banco, teste e 
 
 `make seed` já existe, mas ainda não insere dados.
 
+## CI
+
+Todo PR (inclusive empilhado), push em `develop`/`main` e disparo manual rodam:
+
+-   **Backend CI**: Ruff (`make back-check`), migrations no banco de teste, `alembic check` (falha se um model mudou sem migration), pytest e build da imagem Docker.
+-   **Frontend CI**: Biome, Vitest, build e E2E (Playwright). O teste visual não roda no CI.
+-   **PR Conventions**: o título do PR deve ser `[Área] [Tipo] Título` (Área: Backend, Frontend, Fullstack, Infra, Docs; Tipo: Feature, Fix, Refactor, Test, Docs, Chore, CI) e a branch `<iniciais>/<tipo>/<descricao-em-kebab-case>` (tipo: feat, fix, refactor, test, docs, chore, ci; iniciais com 2 ou 3 letras minúsculas).
+
+Os workflows chamam os mesmos alvos `make` do uso local. Para rodar um workflow manualmente em qualquer branch:
+
+``` bash
+gh workflow run "Backend CI" --ref <branch>
+gh workflow run "Frontend CI" --ref <branch>
+gh run list --branch <branch>
+```
+
 ## Agentes de código
 
 O `AGENTS.md` da raiz é a **fonte única** de instruções para agentes de código (Claude Code, Codex CLI e Gemini CLI). Edite só ele.
