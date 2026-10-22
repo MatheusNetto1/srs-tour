@@ -40,6 +40,8 @@ O projeto está organizado como um monorepo contendo aplicações independentes 
 srs-tour/
 ├── backend/
 │   └── README.md
+├── docker/
+│   └── postgres/init/   # scripts de inicialização do Postgres (banco de teste)
 ├── frontend/
 │   └── README.md
 ├── compose.yml
@@ -67,6 +69,10 @@ Para executar as aplicações diretamente na máquina:
 -   npm
 -   Make
 
+No Windows, use o Git Bash (Git for Windows) com GNU Make instalado
+(por exemplo, `choco install make`). O PowerShell puro não é suportado
+pelo Makefile.
+
 ## Instalação
 
 Clone o repositório e acesse sua raiz:
@@ -76,7 +82,24 @@ git clone https://github.com/MatheusNetto1/srs-tour
 cd srs-tour
 ```
 
-Para instalar as dependências do backend e frontend localmente:
+Primeiro dia (o mesmo fluxo para todo o time, em Git Bash):
+
+``` bash
+make setup   # valida versões, cria backend/.env, instala dependências e browsers do Playwright
+make up      # sobe banco, backend e frontend; as migrations rodam sozinhas
+```
+
+Pronto: o banco de desenvolvimento já tem as tabelas e o banco de teste
+(`srs_tour_test`) já existe. Para rodar `make test`, aplique as migrations no
+banco de teste uma vez com `make back-test-migrate`.
+
+O `make setup` executa, em ordem, `make check` (Python 3.12+, Node 24+,
+Poetry 2+, Docker), `make env` (copia `backend/.env.example` para
+`backend/.env` com uma `SECRET_KEY` aleatória; nunca sobrescreve um `.env`
+existente), `make install` e `make front-install-browsers`. Cada passo também
+pode ser rodado separadamente.
+
+Para instalar apenas as dependências:
 
 ``` bash
 make install
@@ -110,6 +133,15 @@ Os serviços ficam disponíveis em:
 > (ou em um arquivo `.env` na raiz). Ajuste também `DATABASE_URL` e
 > `TEST_DATABASE_URL` em `backend/.env` ao executar o backend fora do Docker.
 > A comunicação entre containers continua usando `db:5432`.
+
+Ao iniciar, o container do backend aplica `alembic upgrade head` no banco de
+desenvolvimento. Depois de puxar migrations novas, rode `make restart` (ou
+`make up`) para aplicá-las. `make back-migrate`, no host, também funciona e
+migra o mesmo banco (via `localhost`).
+
+O banco de teste `srs_tour_test` é criado automaticamente em volumes novos. Em
+um volume antigo, crie-o com `make db-create-test` (idempotente; exige o
+container `db` rodando).
 
 Para encerrar os serviços:
 
@@ -173,15 +205,19 @@ Formatar backend e frontend:
 make format
 ```
 
+Convenção: `*-check` apenas verifica (lint + formato) e `*-lint-fix` /
+`*-format` corrigem os arquivos. `make check-all` roda os dois `*-check`.
+
 Comandos específicos:
 
 ``` bash
-make back-lint
+make back-check
+make back-lint-fix
 make back-format
 
-make front-lint
-make front-format
+make front-check
 make front-lint-fix
+make front-format
 ```
 
 ## Testes
@@ -198,13 +234,17 @@ Executar todos os testes, incluindo E2E:
 make test-all
 ```
 
-Ou executar individualmente:
+Ou executar individualmente, repassando argumentos com `ARGS=`:
 
 ``` bash
-make back-test
-make front-test
-make front-e2e
+make back-test ARGS="-k nome"
+make front-test ARGS="-t nome"
+make front-e2e ARGS="tests/e2e/home.spec.ts"
+make front-visual   # regressão visual: só local, fora do `test-all` e do CI
 ```
+
+O banco de teste precisa estar migrado (`make back-test-migrate`). Os browsers
+do Playwright são instalados pelo `make setup` (ou `make front-install-browsers`).
 
 ## Build
 
@@ -239,6 +279,18 @@ Para visualizar todos os comandos disponíveis:
 ``` bash
 make help
 ```
+
+### Limpeza e reset
+
+Comandos destrutivos exigem `CONFIRM=1`:
+
+``` bash
+make clean                 # caches e builds
+make clean-all CONFIRM=1   # clean + node_modules + .venv
+make db-reset CONFIRM=1    # apaga o volume do Postgres e recria banco, teste e migrations
+```
+
+`make seed` já existe, mas ainda não insere dados.
 
 ## Agentes de código
 

@@ -34,6 +34,7 @@ def main() -> None:
 
     message = " ".join(sys.argv[1:])
     number = get_next_number()
+    existing = set(VERSIONS_DIR.glob("*.py"))
 
     subprocess.run(
         [
@@ -46,16 +47,17 @@ def main() -> None:
         check=True,
     )
 
-    migrations = sorted(
-        VERSIONS_DIR.glob("*.py"),
-        key=lambda path: path.stat().st_mtime,
-        reverse=True,
-    )
+    # Identifica o arquivo gerado pelo que o Alembic acabou de criar,
+    # não pelo mtime (que pode apontar para outro arquivo).
+    created = set(VERSIONS_DIR.glob("*.py")) - existing
 
-    if not migrations:
-        raise RuntimeError("Alembic did not generate a migration.")
+    if len(created) != 1:
+        raise RuntimeError(
+            "Não foi possível identificar a migration gerada pelo Alembic "
+            f"(arquivos novos: {sorted(path.name for path in created)})."
+        )
 
-    generated = migrations[0]
+    generated = created.pop()
 
     new_name = f"{number:04d}_{slugify(message)}.py"
 
