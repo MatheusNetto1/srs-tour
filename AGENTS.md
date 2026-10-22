@@ -8,21 +8,28 @@ Monorepo de turismo: `backend/` (FastAPI, SQLAlchemy 2, Alembic, PostgreSQL, Poe
 
 ## Comandos
 
-Rode tudo a partir da raiz (`make help` lista todos).
+Rode tudo a partir da raiz (`make help` lista todos; cada alvo se documenta com `## descrição` no Makefile).
 
 ```bash
-make install            # poetry install + npm ci
-make up / make rebuild  # db, backend e frontend via Docker Compose
+make setup              # 1º dia: check + env (backend/.env) + install + browsers do Playwright
+make up / make rebuild  # db, backend e frontend via Docker Compose (o backend aplica as migrations ao iniciar)
 make back-dev           # uvicorn --reload (8000, Swagger em /docs)
 make front-dev          # Vite (5173)
-make check-all          # ruff (back) + biome (front)
+make check-all          # ruff (back) + biome (front), somente leitura
 make lint-fix / make format
 make test               # pytest + vitest
-make test-all           # + Playwright E2E (o Vite sobe sozinho)
-make back-test-migrate  # aplica migrations em TEST_DATABASE_URL (make back-test não migra)
+make test-all           # + Playwright E2E (o Vite sobe sozinho); visual fica de fora
+make db-create-test     # cria srs_tour_test no container db (idempotente)
+make back-test-migrate  # cria o banco de teste se faltar e aplica migrations nele (make back-test não migra)
 make back-migration m="create x table"   # autogenerate + numeração 000N_
 make back-migrate / make back-migrate-down
+make seed               # estrutura pronta, sem dados ainda
+make db-reset CONFIRM=1 / make clean-all CONFIRM=1   # destrutivos: exigem CONFIRM=1
 ```
+
+Convenção: `*-check` só lê (lint + formato); `*-lint-fix` e `*-format` corrigem. Alvos de teste aceitam `ARGS=` (`make back-test ARGS="-k nome"`). O `front-visual-update` exige `VISUAL_BASE_URL` e `VISUAL_ROUTE_MODE`.
+
+No Makefile, o make nativo do Windows corrompe acento em `echo`: mensagens com acento vão em `$(error)`/`$(info)` ou em script Python; dentro de `echo`, só ASCII.
 
 Teste isolado:
 
@@ -36,8 +43,8 @@ O alvo para corrigir o frontend é `make front-lint-fix`.
 
 ## Configuração e banco
 
-- `backend/app/core/config.py` lê `backend/.env` (copie de `backend/.env.example`). `DATABASE_URL` e `SECRET_KEY` são obrigatórios; importar `app` sem eles falha. No Compose, `DATABASE_URL` aponta para o host `db`.
-- Testes exigem PostgreSQL real: `tests/conftest.py` aborta sem `TEST_DATABASE_URL` ou se o nome do banco não terminar em `_test`. O banco de teste deve estar migrado: `make back-test-migrate` (o CI usa `alembic upgrade head`).
+- `backend/app/core/config.py` lê `backend/.env` (`make env` cria a partir de `backend/.env.example` com `SECRET_KEY` aleatória, sem sobrescrever). `DATABASE_URL` e `SECRET_KEY` são obrigatórios; importar `app` sem eles falha. No Compose, `DATABASE_URL` aponta para o host `db`; no host, `localhost` (mesmo banco, via porta publicada). O backend do Compose roda `alembic upgrade head` antes do uvicorn.
+- Testes exigem PostgreSQL real: `tests/conftest.py` aborta sem `TEST_DATABASE_URL` ou se o nome do banco não terminar em `_test`. O `srs_tour_test` nasce com volume novo (`docker/postgres/init/`); em volume antigo, `make db-create-test`. Ele deve estar migrado: `make back-test-migrate` (o CI usa `alembic upgrade head`).
 - `db_session` usa sessão real com commit e limpa cada tabela com `DELETE` no final. Novo model ⇒ adicione a tabela ao cleanup do `db_session`.
 
 ## Backend

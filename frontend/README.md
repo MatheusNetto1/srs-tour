@@ -94,14 +94,16 @@ O projeto utiliza Biome para lint e formatação.
 ### Lint
 
 ``` bash
-make front-lint
+make front-lint    # só regras de lint
+make front-check   # lint + formato + imports (o que o CI roda)
 ```
 
 Ou:
 
 ``` bash
 cd frontend
-npm run lint
+npx biome lint .
+npm run lint       # biome check .
 ```
 
 ### Formatação
@@ -156,9 +158,11 @@ npm run test
 
 ### Playwright
 
-Os testes end-to-end utilizam Playwright:
+Os testes end-to-end utilizam Playwright. Instale os browsers uma vez (o
+`make setup` já faz isso):
 
 ``` bash
+make front-install-browsers
 make front-e2e
 ```
 
@@ -173,7 +177,9 @@ Os testes E2E estão localizados em `tests/e2e/`.
 
 ### Regressão visual
 
-Os testes visuais (`npm run test:visual`) rodam só localmente. Veja
+Os testes visuais (`make front-visual`, ou `npm run test:visual`) rodam só
+localmente e não fazem parte do `make test-all`. Para regerar o baseline,
+`make front-visual-update` exige `VISUAL_BASE_URL` e `VISUAL_ROUTE_MODE`. Veja
 [`tests/visual/README.md`](tests/visual/README.md), inclusive como regerar
 os snapshots.
 
