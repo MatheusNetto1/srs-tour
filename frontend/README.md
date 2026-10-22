@@ -120,7 +120,7 @@ npm run format
 ### Correções automáticas
 
 ``` bash
-make front-fix
+make front-lint-fix
 ```
 
 Ou:
@@ -170,6 +170,12 @@ npm run test:e2e
 ```
 
 Os testes E2E estão localizados em `tests/e2e/`.
+
+### Regressão visual
+
+Os testes visuais (`npm run test:visual`) rodam só localmente. Veja
+[`tests/visual/README.md`](tests/visual/README.md), inclusive como regerar
+os snapshots.
 
 O Playwright inicia automaticamente o servidor Vite durante a execução
 dos testes.
