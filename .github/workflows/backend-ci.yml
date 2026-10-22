@@ -1,24 +1,19 @@
 name: Backend CI
 
+# Sem filtro de paths: os checks são obrigatórios na proteção de branch e um
+# workflow pulado por path deixaria o check pendente, bloqueando o merge.
+# Sem filtro de branches em pull_request: PRs empilhados também rodam.
 on:
   pull_request:
-    branches:
-      - develop
-      - main
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
   push:
     branches:
       - develop
       - main
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
 
 concurrency:
-  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -28,53 +23,9 @@ env:
   POETRY_VERSION: "2.4.1"
 
 jobs:
-  quality:
-    name: Quality
+  backend:
+    name: Backend
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: backend
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
-        run: pipx install poetry==${{ env.POETRY_VERSION }}
-
-      - name: Configure Poetry
-        run: poetry config virtualenvs.in-project true
-
-      - name: Cache virtual environment
-        uses: actions/cache@v4
-        with:
-          path: backend/.venv
-          key: backend-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('backend/poetry.lock') }}
-          restore-keys: |
-            backend-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
-
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root
-
-      - name: Run Ruff lint
-        run: poetry run ruff check .
-
-      - name: Check Ruff formatting
-        run: poetry run ruff format --check .
-
-  tests:
-    name: Tests
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: backend
 
     services:
       postgres:
@@ -94,6 +45,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    # As variáveis vêm daqui: no CI não existe backend/.env.
     env:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/srs_tour_test
       TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/srs_tour_test
@@ -125,16 +77,23 @@ jobs:
             backend-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
 
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        run: make install-back
 
-      - name: Run database migrations
-        run: poetry run alembic upgrade head
+      - name: Ruff (lint e formatação)
+        run: make back-check
 
-      - name: Run tests
-        run: poetry run pytest
+      # O Postgres é um service do Actions (não o Compose): não usar back-test-migrate.
+      - name: Migrations no banco de teste
+        run: make back-test-migrate-only
+
+      - name: Models em sincronia com as migrations
+        run: make back-migration-check
+
+      - name: Testes (pytest)
+        run: make back-test
 
   docker:
-    name: Docker Build
+    name: Backend Docker Build
     runs-on: ubuntu-latest
 
     steps:

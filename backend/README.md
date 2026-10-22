@@ -128,6 +128,10 @@ novas migrations, prepare o banco de testes:
 make back-test-migrate
 ```
 
+No CI o Postgres é um service do Actions (não o Compose); lá se usa
+`make back-test-migrate-only`, que só migra. `make back-migration-check`
+(`alembic check`) falha se algum model foi alterado sem migration.
+
 Esse alvo depende de `make db-create-test`, que cria o banco no container `db`
 se ele ainda não existir (idempotente) e falha com mensagem clara se o
 container não estiver rodando.

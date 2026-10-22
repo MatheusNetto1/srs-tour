@@ -173,7 +173,13 @@ cd frontend
 npm run test:e2e
 ```
 
-Os testes E2E estão localizados em `tests/e2e/`.
+Os testes E2E estão localizados em `tests/e2e/` e só precisam do Vite. No CI
+rodam no job `Frontend E2E`, com `make front-install-browsers
+PLAYWRIGHT_INSTALL_ARGS=--with-deps` (dependências de sistema do Linux); o
+relatório e os traces são publicados como artifact quando falham.
+
+Se `make front-e2e` falhar com o frontend do Docker rodando (porta 5173), rode
+`make rebuild` para renovar o `node_modules` do container.
 
 ### Regressão visual
 
