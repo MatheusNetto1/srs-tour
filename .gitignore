@@ -224,3 +224,7 @@ __marimo__/
 .dev/
 backend/.dev/
 frontend/.dev/
+
+# Instruções de agentes (arquivos pessoais)
+.claude/settings.local.json
+CLAUDE.local.md

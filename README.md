@@ -14,7 +14,7 @@ O projeto está organizado como um monorepo contendo aplicações independentes 
 -   PostgreSQL
 -   Ruff
 -   Pytest
--   HTTPX / TestClient
+-   httpx2 / TestClient
 
 ### Frontend
 
@@ -181,7 +181,7 @@ make back-format
 
 make front-lint
 make front-format
-make front-fix
+make front-lint-fix
 ```
 
 ## Testes
@@ -239,6 +239,17 @@ Para visualizar todos os comandos disponíveis:
 ``` bash
 make help
 ```
+
+## Agentes de código
+
+O `AGENTS.md` da raiz é a **fonte única** de instruções para agentes de código (Claude Code, Codex CLI e Gemini CLI). Edite só ele.
+
+-   Não crie `CLAUDE.md`, `GEMINI.md` nem `CLAUDE.local.md`. O Claude Code só lê o `AGENTS.md` quando não existe nenhum `CLAUDE.md` (nem `CLAUDE.local.md`) no diretório de trabalho ou acima dele.
+-   **Claude Code**: versão mínima v2.1.277. Confirme com `/memory` (ou pela linha `no CLAUDE.md found; AGENTS.md loaded: ...` no início da sessão).
+-   **Codex CLI**: lê o `AGENTS.md` nativamente. Confirme com `codex --ask-for-approval never "Show which instruction files are active."`.
+-   **Gemini CLI**: o `.gemini/settings.json` do repositório aponta `context.fileName` para o `AGENTS.md`. Confirme pelo contador de arquivos de contexto no rodapé ou com `/memory show`.
+    -   Se o recurso de pastas confiáveis estiver ativo (`security.folderTrust.enabled`, desligado por padrão), o Gemini ignora o `.gemini/settings.json` de pastas não confiáveis. Confie na pasta do projeto com `/permissions` (ou em `~/.gemini/trustedFolders.json`).
+-   Regra do time: nenhuma linha de atribuição a IA em commits e PRs. Está no `AGENTS.md` e, no Claude Code, em `.claude/settings.json`.
 
 ## Documentação específica
 
