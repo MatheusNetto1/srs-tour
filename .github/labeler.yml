@@ -1,6 +1,8 @@
 # ==========================================
 # SRS Tour - Pull Request Labeler
 # ==========================================
+# actions/labeler@v6 (minimatch com dot: true). Com pull_request_target, a
+# action lê este arquivo da branch base: mudanças aqui só valem após o merge.
 
 "area: backend":
   - changed-files:
@@ -15,17 +17,19 @@
 "area: ci":
   - changed-files:
       - any-glob-to-any-file:
-          - ".github/workflows/**"
+          - ".github/**"
 
 "area: docker":
   - changed-files:
       - any-glob-to-any-file:
           - "**/Dockerfile"
           - "**/Dockerfile.*"
+          - "**/.dockerignore"
           - "compose.yml"
           - "compose.yaml"
           - "docker-compose.yml"
           - "docker-compose.yaml"
+          - "docker/**"
 
 "area: docs":
   - changed-files:
@@ -37,7 +41,11 @@
   - changed-files:
       - any-glob-to-any-file:
           - "Makefile"
-          - "**/Makefile"
+          - "AGENTS.md"
+          - ".claude/**"
+          - ".gemini/**"
+          - ".gitattributes"
+          - "backend/scripts/**"
           - "backend/pyproject.toml"
           - "backend/poetry.lock"
           - "frontend/package.json"
@@ -46,7 +54,7 @@
           - "frontend/tsconfig*.json"
           - "frontend/vite.config.*"
           - "frontend/vitest.config.*"
-          - "frontend/playwright.config.*"
+          - "frontend/playwright*.ts"
 
 "area: dependencies":
   - changed-files:
@@ -59,15 +67,15 @@
 "area: database":
   - changed-files:
       - any-glob-to-any-file:
-          - "backend/**/models/**"
-          - "backend/**/migrations/**"
+          - "backend/app/**/models.py"
+          - "backend/app/core/database.py"
           - "backend/alembic/**"
           - "backend/alembic.ini"
+          - "docker/postgres/**"
 
 "area: api":
   - changed-files:
       - any-glob-to-any-file:
-          - "backend/**/routers/**"
-          - "backend/**/routes/**"
-          - "backend/**/api/**"
-          - "backend/**/schemas/**"
+          - "backend/app/**/router.py"
+          - "backend/app/**/schemas.py"
+          - "backend/app/api/**"
