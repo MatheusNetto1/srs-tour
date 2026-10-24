@@ -163,7 +163,7 @@ def test_create_rejects_non_finite_values(client: TestClient, literal: str) -> N
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-    assert response.json()["detail"][0]["loc"] == ["body", "value"]
+    assert response.json()["errors"][0]["field"] == "body.value"
 
 
 def test_create_rejects_non_numeric_value(client: TestClient) -> None:
@@ -242,7 +242,10 @@ def test_public_get_by_id_of_draft_returns_not_found(client: TestClient) -> None
     response = client.get(f"{BASE_URL}/{draft['id']}")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "indicator.not_found",
+    }
 
 
 def test_public_get_by_id_after_unpublish_returns_not_found(
@@ -262,7 +265,10 @@ def test_public_get_nonexistent_returns_not_found_in_portuguese(
     response = client.get(f"{BASE_URL}/999999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "indicator.not_found",
+    }
 
 
 def test_public_get_with_invalid_id_returns_validation_error(
@@ -447,7 +453,10 @@ def test_admin_get_nonexistent_returns_not_found(client: TestClient) -> None:
     response = client.get(f"{ADMIN_URL}/999999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "indicator.not_found",
+    }
 
 
 # --------------------------------------------------------------------------
@@ -592,7 +601,10 @@ def test_update_nonexistent_returns_not_found(client: TestClient) -> None:
     response = client.put(f"{ADMIN_URL}/999999", json=payload())
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "indicator.not_found",
+    }
 
 
 # --------------------------------------------------------------------------
@@ -648,7 +660,10 @@ def test_status_change_of_nonexistent_returns_not_found(
     response = client.patch(f"{ADMIN_URL}/999999/{action}")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "indicator.not_found",
+    }
 
 
 # --------------------------------------------------------------------------
@@ -681,7 +696,10 @@ def test_delete_nonexistent_returns_not_found(client: TestClient) -> None:
     response = client.delete(f"{ADMIN_URL}/999999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "indicator.not_found",
+    }
 
 
 def test_delete_twice_returns_not_found_on_second_call(client: TestClient) -> None:
