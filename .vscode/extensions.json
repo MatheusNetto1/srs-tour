@@ -1,0 +1,12 @@
+{
+	"recommendations": [
+		"biomejs.biome",
+		"charliermarsh.ruff",
+		"ms-python.python",
+		"ms-playwright.playwright",
+		"vitest.explorer",
+		"editorconfig.editorconfig",
+		"bradlc.vscode-tailwindcss",
+		"ms-azuretools.vscode-containers"
+	]
+}

@@ -1,0 +1,43 @@
+{
+	"editor.formatOnSave": true,
+
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[css]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[python]": {
+		"editor.defaultFormatter": "charliermarsh.ruff"
+	},
+
+	"editor.codeActionsOnSave": {
+		"source.organizeImports.biome": "explicit",
+		"source.organizeImports.ruff": "explicit"
+	},
+
+	"biome.configurationPath": "frontend/biome.json",
+	"biome.lsp.bin": "frontend/node_modules/@biomejs/cli-win32-x64/biome.exe",
+
+	"python.envFile": "${workspaceFolder}/backend/.env",
+	"python.terminal.activateEnvironment": false,
+	"python-envs.terminal.autoActivationType": "off",
+	"python.testing.pytestEnabled": true,
+	"python.testing.unittestEnabled": false,
+	"python.testing.cwd": "${workspaceFolder}/backend",
+	"python.testing.pytestArgs": ["tests"],
+	"python-envs.defaultEnvManager": "ms-python.python:poetry",
+	"python-envs.defaultPackageManager": "ms-python.python:poetry"
+}
