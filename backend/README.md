@@ -10,7 +10,7 @@ Backend da aplicação SRS Tour desenvolvido com FastAPI.
 -   PostgreSQL
 -   Ruff
 -   Pytest
--   HTTPX / TestClient
+-   httpx2 / TestClient
 
 ## Pré-requisitos
 
@@ -141,4 +141,4 @@ poetry run pytest
 
 Os testes do backend utilizam Pytest. Requisições HTTP à aplicação podem
 ser testadas através do `TestClient` do FastAPI/Starlette, utilizando
-HTTPX.
+httpx2.

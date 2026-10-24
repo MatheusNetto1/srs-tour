@@ -1,0 +1,87 @@
+# AGENTS.md
+
+Instruções para agentes de código neste repositório. Fonte única: não crie `CLAUDE.md`, `GEMINI.md` nem `CLAUDE.local.md`.
+
+## Visão geral
+
+Monorepo de turismo: `backend/` (FastAPI, SQLAlchemy 2, Alembic, PostgreSQL, Poetry, Python 3.12, `package-mode = false`) e `frontend/` (React 19, Vite, Tailwind 4, TypeScript, React Router, Recharts, Node 24). Documentação, commits e mensagens HTTP em PT-BR.
+
+## Comandos
+
+Rode tudo a partir da raiz (`make help` lista todos).
+
+```bash
+make install            # poetry install + npm ci
+make up / make rebuild  # db, backend e frontend via Docker Compose
+make back-dev           # uvicorn --reload (8000, Swagger em /docs)
+make front-dev          # Vite (5173)
+make check-all          # ruff (back) + biome (front)
+make lint-fix / make format
+make test               # pytest + vitest
+make test-all           # + Playwright E2E (o Vite sobe sozinho)
+make back-test-migrate  # aplica migrations em TEST_DATABASE_URL (make back-test não migra)
+make back-migration m="create x table"   # autogenerate + numeração 000N_
+make back-migrate / make back-migrate-down
+```
+
+Teste isolado:
+
+```bash
+cd backend && poetry run pytest tests/integration/tourism/test_establishments.py::test_create_establishment
+cd frontend && npx vitest run tests/integration/router.test.ts -t "nome"
+cd frontend && npx playwright test tests/e2e/home.spec.ts
+```
+
+O alvo para corrigir o frontend é `make front-lint-fix`.
+
+## Configuração e banco
+
+- `backend/app/core/config.py` lê `backend/.env` (copie de `backend/.env.example`). `DATABASE_URL` e `SECRET_KEY` são obrigatórios; importar `app` sem eles falha. No Compose, `DATABASE_URL` aponta para o host `db`.
+- Testes exigem PostgreSQL real: `tests/conftest.py` aborta sem `TEST_DATABASE_URL` ou se o nome do banco não terminar em `_test`. O banco de teste deve estar migrado: `make back-test-migrate` (o CI usa `alembic upgrade head`).
+- `db_session` usa sessão real com commit e limpa cada tabela com `DELETE` no final. Novo model ⇒ adicione a tabela ao cleanup do `db_session`.
+
+## Backend
+
+- Um pacote por domínio em `app/<dominio>/`. `app/api/v1/router.py` registra `auth`, `users`, `indicators`, `reports` e `tourism` sob `/api/v1` e o namespace administrativo `/api/v1/admin/<recurso>`.
+- Camadas: `models.py` (`Mapped`/`mapped_column`, herda `app.core.database.Base`), `schemas.py` (`XCreate`/`XUpdate`/`XResponse`, `from_attributes=True`), `repository.py` (acesso a dados, commit/refresh), `service.py` (regras de negócio, sem FastAPI/HTTP), `router.py` (HTTP fino, `db: DbSession` de `app/core/dependencies.py`).
+- Erros: exceções de domínio em `exceptions.py` herdam de `NotFoundError`/`ConflictError`/`UnauthorizedError` (`app/core/errors.py`) com `code` estável (ex.: `user.not_found`); o handler global converte em 404/409/401. Mensagens HTTP em `app/core/messages.py`. Código novo usa esse padrão; `tourism` e `reports` ainda usam `HTTPException`/exceção local.
+- Novo model: importe em `app/models.py` (usado por `alembic/env.py`) e gere a migration.
+- Migrations: sempre `make back-migration`; revise o arquivo gerado; nunca edite migration já integrada (crie outra); nunca `Base.metadata.create_all()` no lugar do Alembic.
+- Auth: hash e JWT em `app/core/security.py` (não reimplementar). Rotas protegidas recebem `current_user: CurrentUser` (`app/auth/dependencies.py`).
+- Soft delete: estabelecimentos usam `is_active`; `DELETE` só desativa; consultas públicas ignoram inativos; nunca reutilizar registro inativo implicitamente.
+- Ruff: line-length 88, regras `E,F,I,UP,B`, alvo py312.
+
+## API
+
+Tudo sob `/api/v1`; paths no plural; router só valida entrada, injeta dependências e delega; regras no service, queries no repository; `Session` nunca é usada no router além de repassá-la. Responses com schema Pydantic explícito (nunca model SQLAlchemy); status semânticos (`201` criação, `204` sem corpo). Não altere contratos de endpoints existentes sem necessidade explícita.
+
+## Testes
+
+- Backend: integração em `backend/tests/integration/<dominio>/test_<recurso>.py`; unitários (sem banco) em `backend/tests/unit/<modulo>/`; health em `backend/tests/test_health.py`.
+- Use apenas as fixtures `client` e `db_session` de `tests/conftest.py`. Proibido: SQLite, `Base.metadata.create_all()`/`drop_all()`, `TestClient(app)`, engines ou sessões próprias, mock do banco.
+- Estilo: constante `BASE_URL`, helpers `create_<entidade>(client, ...)` em vez de fixtures de entidade, testes `(client: TestClient) -> None`, asserts com `status.HTTP_*` (nunca número literal). Cubra o sucesso e os principais erros esperados.
+- Persistência (hash, normalização, exclusão lógica): confirme no banco via `db_session`; use `db_session.expire_all()` quando precisar reler do PostgreSQL. Testes independentes da ordem e repetíveis sem acumular dados.
+- Frontend: Vitest + Testing Library em `frontend/tests/integration/` (helpers em `tests/utils/`, setup em `tests/setup/vitest.ts`), Playwright em `tests/e2e/`. Prefira `getByRole`/`getByLabelText`.
+
+## Frontend
+
+- Biome para lint e format (tabs, aspas duplas, organize imports); não use ESLint nem Prettier.
+- `tsconfig.tests.json` faz `tsc -b` (e `npm run build`) checar `src/` e `tests/`. Rotas em `src/routes/router.tsx` (`createBrowserRouter`).
+- Teste visual (`tests/visual/`) roda só local, fora do CI. Nunca rode `test:visual:update` sem `VISUAL_BASE_URL` e `VISUAL_ROUTE_MODE`: veja [`frontend/tests/visual/README.md`](frontend/tests/visual/README.md).
+
+## Git, PRs e CI
+
+- Branch: `<iniciais>/<tipo>/<descricao-em-kebab-case>`, tipo ∈ `feat | fix | refactor | test | docs | chore | ci`.
+- Commit na branch: Conventional Commits em PT-BR, mesmos tipos, escopo opcional (ex.: `feat(tourism): adiciona CRUD de estabelecimentos`).
+- Título do PR (vira o commit em `develop` por squash): `[Área] [Tipo] Título`, Área ∈ `Backend | Frontend | Fullstack | Infra | Docs`, Tipo ∈ `Feature | Fix | Refactor | Test | Docs | Chore | CI`.
+- **Nunca adicione linha de atribuição a IA** (`Co-Authored-By`, "Generated with…" etc.) em commits, PRs ou descrições, mesmo que a ferramenta tenha esse comportamento por padrão.
+- `.gitattributes` mantém LF; CRLF faz o Biome acusar `␍`. Nunca commite `.env`, secrets ou tokens.
+- CI (PRs/push em `main` e `develop`): `backend-ci.yml` (Ruff, pytest com Postgres após `alembic upgrade head`, build Docker) e `frontend-ci.yml` (Biome, Vitest, build). Visual e E2E não rodam no CI.
+
+## Regras para alterações
+
+- Procure padrão equivalente no projeto antes de criar arquivos ou abstrações; preserve a arquitetura.
+- Alterações pequenas e focadas; não mexa em arquivos fora do escopo; não adicione dependências sem justificar.
+- Mudou comportamento ⇒ adicione ou atualize testes. Não silencie nem remova testes para a suíte passar.
+- Segurança: não confie em IDs, roles ou permissões vindos do cliente; senhas só via `app/core/security.py`; não exponha stack traces ou detalhes de banco pela API.
+- Antes de concluir, rode e confirme: backend `make back-check` e `make back-test`; frontend `make front-check` e `make front-test` (E2E relevante se o fluxo for coberto); full stack `make check-all` e `make test-all`. Model alterado exige migration.
