@@ -23,6 +23,7 @@ make db-create-test     # cria srs_tour_test no container db (idempotente)
 make back-test-migrate  # cria o banco de teste se faltar e aplica migrations nele (make back-test não migra)
 make back-migration m="create x table"   # autogenerate + numeração 000N_
 make back-migrate / make back-migrate-down
+make front-api-types    # gera frontend/src/api/schema.d.ts do /openapi.json (exige make up; arquivo ignorado pelo git)
 make seed               # estrutura pronta, sem dados ainda
 make back-migration-single-head   # falha se houver mais de uma head do Alembic (sem banco; roda no CI)
 make docker-seed / docker-back-test / docker-back-test-migrate / docker-back-migration m="..."   # o mesmo dentro do container backend (sem Poetry no host; exigem make up)
@@ -79,6 +80,7 @@ Tudo sob `/api/v1`; paths no plural; router só valida entrada, injeta dependên
 
 - Biome para lint e format (tabs, aspas duplas, organize imports); não use ESLint nem Prettier.
 - `tsconfig.tests.json` faz `tsc -b` (e `npm run build`) checar `src/` e `tests/`. Rotas em `src/routes/router.tsx` (`createBrowserRouter`).
+- Acesso à API só por `src/api/client.ts` (`request`, único ponto de `fetch`); erros chegam como `ApiError` (aceita o envelope `detail`+`code`+`errors` e o formato antigo). O Vite faz proxy de `/api` (`API_PROXY_TARGET`). Dados em componentes: `useApiQuery` + `LoadingState`/`ErrorState`/`EmptyState`. `src/api/schema.d.ts` é gerado e ignorado pelo git. O `overrides` do `openapi-typescript` no `package.json` está explicado em `frontend/README.md`.
 - Teste visual (`tests/visual/`) roda só local, fora do CI. Nunca rode `test:visual:update` sem `VISUAL_BASE_URL` e `VISUAL_ROUTE_MODE`: veja [`frontend/tests/visual/README.md`](frontend/tests/visual/README.md).
 
 ## Git, PRs e CI

@@ -42,6 +42,7 @@ services:
     environment:
       # Bind mount no Windows não propaga eventos de arquivo ao container.
       DEV_USE_POLLING: "true"
+      API_PROXY_TARGET: http://backend:8000
     depends_on:
       backend:
         condition: service_healthy
