@@ -1,0 +1,49 @@
+# EditorConfig (https://editorconfig.org)
+#
+# Os formatadores são a autoridade: Biome (frontend/biome.json) e Ruff
+# (backend/pyproject.toml). Este arquivo só evita que o editor gere diffs antes
+# deles. Se divergir, vale o formatador: ajuste aqui, não o contrário.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Backend: Ruff (line-length 88, 4 espaços). O pyproject.toml usa 4 espaços.
+[*.{py,pyi,toml}]
+indent_size = 4
+
+[*.py]
+max_line_length = 88
+
+# Frontend: Biome formata com tabs (indentStyle = "tab"). HTML e Markdown ficam
+# de fora: o Biome não os formata aqui (o index.html usa 2 espaços).
+[frontend/**.{ts,tsx,js,jsx,mjs,cjs,css}]
+indent_style = tab
+
+# JSON do projeto (Biome no frontend; .claude, .gemini e .vscode seguem igual).
+[*.{json,jsonc}]
+indent_style = tab
+
+# Gerado e reescrito pelo npm com 2 espaços; o Biome ignora este arquivo.
+[package-lock.json]
+indent_style = space
+indent_size = 2
+
+# Makefile exige tabs.
+[{Makefile,*.mk}]
+indent_style = tab
+indent_size = 4
+
+[{Dockerfile,Dockerfile.*}]
+indent_size = 4
+
+# Dois espaços no fim da linha são quebra de linha intencional no Markdown.
+[*.md]
+indent_size = unset
+trim_trailing_whitespace = false
