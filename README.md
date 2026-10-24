@@ -82,6 +82,8 @@ git clone https://github.com/MatheusNetto1/srs-tour
 cd srs-tour
 ```
 
+Antes de contribuir, leia o [CONTRIBUTING.md](CONTRIBUTING.md) (fluxo de branch, commit, PR e revisão).
+
 Primeiro dia (o mesmo fluxo para todo o time, em Git Bash):
 
 ``` bash
@@ -93,8 +95,8 @@ Pronto: o banco de desenvolvimento já tem as tabelas e o banco de teste
 (`srs_tour_test`) já existe. Para rodar `make test`, aplique as migrations no
 banco de teste uma vez com `make back-test-migrate`.
 
-O `make setup` executa, em ordem, `make check` (Python 3.12+, Node 24+,
-Poetry 2+, Docker), `make env` (copia `backend/.env.example` para
+O `make setup` executa, em ordem, `make check` (versões mínimas de
+`.python-version`, `.nvmrc` e `requires-poetry`, mais Docker), `make env` (copia `backend/.env.example` para
 `backend/.env` com uma `SECRET_KEY` aleatória; nunca sobrescreve um `.env`
 existente), `make install` e `make front-install-browsers`. Cada passo também
 pode ser rodado separadamente.
@@ -206,7 +208,7 @@ make format
 ```
 
 Convenção: `*-check` apenas verifica (lint + formato) e `*-lint-fix` /
-`*-format` corrigem os arquivos. `make check-all` roda os dois `*-check`.
+`*-format` corrigem os arquivos. `make check-all` roda os dois `*-check` e o `make check-pins` (versões de Python, Node e Poetry em sincronia entre os arquivos de pin, Dockerfiles e CI).
 
 Comandos específicos:
 
@@ -296,7 +298,7 @@ make db-reset CONFIRM=1    # apaga o volume do Postgres e recria banco, teste e 
 
 Todo PR (inclusive empilhado), push em `develop`/`main` e disparo manual rodam:
 
--   **Backend CI**: Ruff (`make back-check`), migrations no banco de teste, `alembic check` (falha se um model mudou sem migration), pytest e build da imagem Docker.
+-   **Backend CI**: Ruff (`make back-check`), versões em sincronia (`make check-pins`), migrations no banco de teste, `alembic check` (falha se um model mudou sem migration), pytest e build da imagem Docker.
 -   **Frontend CI**: Biome, Vitest, build e E2E (Playwright). O teste visual não roda no CI.
 -   **PR Conventions**: o título do PR deve ser `[Área] [Tipo] Título` (Área: Backend, Frontend, Fullstack, Infra, Docs; Tipo: Feature, Fix, Refactor, Test, Docs, Chore, CI) e a branch `<iniciais>/<tipo>/<descricao-em-kebab-case>` (tipo: feat, fix, refactor, test, docs, chore, ci; iniciais com 2 ou 3 letras minúsculas).
 
@@ -310,16 +312,10 @@ gh run list --branch <branch>
 
 ## Agentes de código
 
-O `AGENTS.md` da raiz é a **fonte única** de instruções para agentes de código (Claude Code, Codex CLI e Gemini CLI). Edite só ele.
-
--   Não crie `CLAUDE.md`, `GEMINI.md` nem `CLAUDE.local.md`. O Claude Code só lê o `AGENTS.md` quando não existe nenhum `CLAUDE.md` (nem `CLAUDE.local.md`) no diretório de trabalho ou acima dele.
--   **Claude Code**: versão mínima v2.1.277. Confirme com `/memory` (ou pela linha `no CLAUDE.md found; AGENTS.md loaded: ...` no início da sessão).
--   **Codex CLI**: lê o `AGENTS.md` nativamente. Confirme com `codex --ask-for-approval never "Show which instruction files are active."`.
--   **Gemini CLI**: o `.gemini/settings.json` do repositório aponta `context.fileName` para o `AGENTS.md`. Confirme pelo contador de arquivos de contexto no rodapé ou com `/memory show`.
-    -   Se o recurso de pastas confiáveis estiver ativo (`security.folderTrust.enabled`, desligado por padrão), o Gemini ignora o `.gemini/settings.json` de pastas não confiáveis. Confie na pasta do projeto com `/permissions` (ou em `~/.gemini/trustedFolders.json`).
--   Regra do time: nenhuma linha de atribuição a IA em commits e PRs. Está no `AGENTS.md` e, no Claude Code, em `.claude/settings.json`.
+O `AGENTS.md` da raiz é a fonte única de instruções para agentes de código (Claude Code, Codex CLI e Gemini CLI). Como confirmar a leitura em cada ferramenta e o que evitar: [CONTRIBUTING.md](CONTRIBUTING.md#agentes-de-código).
 
 ## Documentação específica
 
+-   [Guia de contribuição](CONTRIBUTING.md): fluxo de branch, commit, PR, revisão e PRs empilhados
 -   [Backend](backend/README.md)
 -   [Frontend](frontend/README.md)
