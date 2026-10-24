@@ -70,6 +70,13 @@ Ou:
 docker compose up
 ```
 
+No container, o Vite usa polling (`DEV_USE_POLLING=true` no `compose.yml`):
+sem isso, no Windows, uma edição em `src/` não chega ao navegador até
+reiniciar o serviço. No host (`make front-dev`) o polling fica desligado. A
+porta do host é `FRONTEND_HOST_PORT` (padrão 5173); o serviço tem
+`healthcheck` e só sobe depois do backend ficar `healthy`. Exemplo das
+variáveis em [`.env.example`](../.env.example) (raiz).
+
 ## Build
 
 Para gerar o build de produção:

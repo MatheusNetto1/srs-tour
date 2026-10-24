@@ -86,6 +86,14 @@ tabelas. Dentro do container, `DATABASE_URL` aponta para o host `db`; no host
 (`make back-migrate`, `make back-dev`) ela usa `localhost`, e os dois acessam o
 mesmo banco.
 
+O backend e o frontend têm `healthcheck` no Compose (`make ps` mostra
+`healthy`). Sem Poetry no host, use os alvos que rodam dentro do container,
+com o ambiente no ar (`make up`): `make docker-back-test-migrate`,
+`make docker-back-test ARGS="-k nome"`, `make docker-seed` e
+`make docker-back-migration m="create x table"`. Eles exportam
+`TEST_DATABASE_URL` com o host `db`. Os alvos sem prefixo continuam rodando no
+host, com Poetry.
+
 ## Qualidade de código
 
 ### Lint
@@ -130,7 +138,10 @@ make back-test-migrate
 
 No CI o Postgres é um service do Actions (não o Compose); lá se usa
 `make back-test-migrate-only`, que só migra. `make back-migration-check`
-(`alembic check`) falha se algum model foi alterado sem migration.
+(`alembic check`) falha se algum model foi alterado sem migration, e
+`make back-migration-single-head` (sem banco; roda no CI antes das migrations)
+falha se duas migrations partirem da mesma revisão: ajuste o `down_revision`
+da que você criou.
 
 Esse alvo depende de `make db-create-test`, que cria o banco no container `db`
 se ele ainda não existir (idempotente) e falha com mensagem clara se o
@@ -157,6 +168,7 @@ poetry run pytest
 
 `make seed` executa `backend/scripts/seed.py`, que ainda não insere nada.
 Veja a docstring do script para adicionar dados de forma idempotente.
+Dentro do container: `make docker-seed`.
 
 Os testes do backend utilizam Pytest. Requisições HTTP à aplicação podem
 ser testadas através do `TestClient` do FastAPI/Starlette, utilizando
