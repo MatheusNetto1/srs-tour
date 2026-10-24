@@ -26,7 +26,7 @@
 	back-migration-current back-migration-heads back-migration-check \
 	seed \
 	front-dev front-lint front-lint-fix front-format front-format-check \
-	front-check front-build front-install-browsers \
+	front-check front-build front-api-types front-install-browsers \
 	front-test front-test-watch front-e2e front-visual front-visual-update \
 	lint lint-fix format format-check check-all test test-all \
 	clean clean-back clean-front clean-all db-reset
@@ -307,6 +307,9 @@ front-check: ## Verificação somente leitura: lint + formato + imports
 
 front-build: ## Gera o build de produção
 	@$(FRONT_RUN) build
+
+front-api-types: ## Gera src/api/schema.d.ts a partir do /openapi.json (exige o backend no ar)
+	@$(FRONT_RUN) api:types
 
 front-install-browsers: ## Instala o Chromium do Playwright (CI: PLAYWRIGHT_INSTALL_ARGS=--with-deps)
 	@cd $(FRONTEND_DIR) && npx playwright install $(PLAYWRIGHT_INSTALL_ARGS) chromium

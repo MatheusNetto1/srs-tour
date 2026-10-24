@@ -77,6 +77,55 @@ porta do host é `FRONTEND_HOST_PORT` (padrão 5173); o serviço tem
 `healthcheck` e só sobe depois do backend ficar `healthy`. Exemplo das
 variáveis em [`.env.example`](../.env.example) (raiz).
 
+## Acesso à API
+
+O Vite encaminha `/api` para o backend (`server.proxy`), então o navegador fala
+só com a origem do frontend e não há CORS. O destino é `API_PROXY_TARGET`
+(padrão `http://localhost:8000`; no container, `http://backend:8000`, definido
+no `compose.yml`). Exemplo de variáveis em [`.env.example`](.env.example).
+
+Em `src/api/`:
+
+-   `client.ts`: `request<T>(path, { method, query, body, signal })`, o **único**
+    ponto de `fetch`. Base `VITE_API_BASE_URL` (padrão `/api/v1`), envia JSON,
+    anexa `Authorization: Bearer` quando há token e trata `204`.
+-   `errors.ts`: `ApiError` (`status`, `code`, `detail`, `errors`). Normaliza o
+    envelope de erro novo (`detail` + `code` + `errors`) e o formato antigo
+    (`detail` string, ou `detail` lista no 422). Falha de rede vira `status: 0`,
+    `code: "network_error"`; resposta que não é JSON vira `internal_error`.
+-   `token.ts`: token em `sessionStorage` (`srs-tour.token`), tolerante a storage
+    indisponível.
+-   `useApiQuery.ts`: `useApiQuery(fetcher, deps)` devolve `status`
+    (`loading | error | empty | success`), `data`, `error` e `refetch()`; cancela
+    ao desmontar e ignora resposta atrasada.
+
+`LoadingState`, `ErrorState` e `EmptyState` (`src/components/ui/`) mostram cada
+estado; ainda não são usados pelas páginas.
+
+### Tipos do OpenAPI
+
+Com o backend no ar (`make up`):
+
+``` bash
+make front-api-types
+```
+
+Gera `src/api/schema.d.ts` a partir de `${API_PROXY_TARGET}/openapi.json`. O
+arquivo está no `.gitignore` e nada o importa por enquanto (assim `tsc -b` e o
+CI não dependem do backend).
+
+### Override do TypeScript no `package.json`
+
+O `openapi-typescript` (7.13.0, fixado) declara `peer typescript@^5.x`, mas o
+projeto usa TypeScript 6. Sem ajuste, o `npm install` falha com `ERESOLVE`. O
+`package.json` tem um `overrides` restrito a esse pacote
+(`"openapi-typescript": { "typescript": "$typescript" }`), que o faz usar o
+TypeScript do projeto. A geração de tipos foi validada com o TS 6.
+
+**Remover o `overrides`** quando o `openapi-typescript` declarar suporte ao
+TypeScript 6 no `peerDependencies` (confira com `npm view openapi-typescript
+peerDependencies`) e confirmar que `npm ci` segue passando.
+
 ## Build
 
 Para gerar o build de produção:

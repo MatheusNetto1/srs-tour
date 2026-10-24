@@ -8,6 +8,14 @@ export default defineConfig({
 	plugins: [react(), tailwindcss()],
 
 	server: {
+		// `/api` vai para o backend: o navegador fala só com a origem do Vite,
+		// então não há CORS. No container o destino é http://backend:8000.
+		proxy: {
+			"/api": {
+				target: process.env.API_PROXY_TARGET ?? "http://localhost:8000",
+				changeOrigin: true,
+			},
+		},
 		watch: {
 			// Só no container (compose.yml): o bind mount do Windows não propaga
 			// eventos de arquivo. No host (`make front-dev`) o padrão basta.

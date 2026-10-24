@@ -160,6 +160,13 @@ make docker-back-migration m="create x table"
 Os alvos sem prefixo (`back-test`, `seed`, `back-migration`...) continuam
 rodando no host, com Poetry.
 
+### Frontend e API
+
+O Vite faz proxy de `/api` para o backend (`API_PROXY_TARGET`), então
+`http://localhost:5173/api/v1/...` chega à API sem CORS. Para gerar os tipos do
+OpenAPI do frontend com o ambiente no ar: `make front-api-types`. Detalhes em
+[`frontend/README.md`](frontend/README.md#acesso-à-api).
+
 Ao iniciar, o container do backend aplica `alembic upgrade head` no banco de
 desenvolvimento. Depois de puxar migrations novas, rode `make restart` (ou
 `make up`) para aplicá-las. `make back-migrate`, no host, também funciona e
