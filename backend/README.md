@@ -24,9 +24,11 @@ partir da raiz do projeto.
 
 ## Instalação
 
-A partir da raiz:
+A partir da raiz, o fluxo completo do primeiro dia é `make setup` (veja o
+README da raiz). Só o backend:
 
 ``` bash
+make env           # cria backend/.env com SECRET_KEY aleatória (não sobrescreve)
 make install-back
 ```
 
@@ -78,7 +80,11 @@ docker compose up
 ```
 
 O backend será executado junto com os demais serviços definidos no
-`compose.yml`.
+`compose.yml`. Ao iniciar, o container roda `alembic upgrade head` antes do
+uvicorn; por isso, depois do `make up`, o banco de desenvolvimento já tem as
+tabelas. Dentro do container, `DATABASE_URL` aponta para o host `db`; no host
+(`make back-migrate`, `make back-dev`) ela usa `localhost`, e os dois acessam o
+mesmo banco.
 
 ## Qualidade de código
 
@@ -114,13 +120,17 @@ Os testes de integração usam um PostgreSQL real e exigem a variável
 `TEST_DATABASE_URL` (veja `.env.example`) apontando para um banco cujo nome
 termine em `_test`, por exemplo `srs_tour_test`.
 
-Antes da primeira execução, e sempre que houver novas migrations, prepare o
-banco de testes (o banco precisa existir; o comando apenas aplica as
-migrations nele):
+O `srs_tour_test` é criado automaticamente em volumes novos do Docker
+(`docker/postgres/init/`). Antes da primeira execução, e sempre que houver
+novas migrations, prepare o banco de testes:
 
 ``` bash
 make back-test-migrate
 ```
+
+Esse alvo depende de `make db-create-test`, que cria o banco no container `db`
+se ele ainda não existir (idempotente) e falha com mensagem clara se o
+container não estiver rodando.
 
 Esse comando usa somente `TEST_DATABASE_URL`, nunca `DATABASE_URL`, e falha
 se a variável não estiver configurada ou se o banco não terminar em `_test`.
@@ -132,12 +142,17 @@ Para executar os testes:
 make back-test
 ```
 
-Ou:
+Para filtrar: `make back-test ARGS="-k nome"`. Ou:
 
 ``` bash
 cd backend
 poetry run pytest
 ```
+
+## Seed
+
+`make seed` executa `backend/scripts/seed.py`, que ainda não insere nada.
+Veja a docstring do script para adicionar dados de forma idempotente.
 
 Os testes do backend utilizam Pytest. Requisições HTTP à aplicação podem
 ser testadas através do `TestClient` do FastAPI/Starlette, utilizando
