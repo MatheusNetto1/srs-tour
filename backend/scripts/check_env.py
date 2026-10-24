@@ -1,5 +1,8 @@
 """Valida as ferramentas e versões mínimas do ambiente (`make check`).
 
+As versões mínimas não ficam aqui: vêm de `.python-version` e `.nvmrc` (raiz) e
+de `requires-poetry` em `backend/pyproject.toml`.
+
 Usa apenas a biblioteca padrão para rodar antes de `poetry install`.
 """
 
@@ -7,18 +10,43 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
-ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+ROOT_DIR = BACKEND_DIR.parent
+ENV_FILE = BACKEND_DIR / ".env"
 
-# nome, comando que imprime a versão, versão mínima (None = só precisa existir)
-TOOLS: list[tuple[str, list[str], tuple[int, int] | None]] = [
-    ("Python", [sys.executable, "--version"], (3, 12)),
-    ("Poetry", ["poetry", "--version"], (2, 0)),
-    ("Node", ["node", "--version"], (24, 0)),
-    ("npm", ["npm", "--version"], None),
-    ("Docker", ["docker", "--version"], None),
-]
+
+def parse_minimum(text: str, source: str) -> tuple[int, int]:
+    match = re.search(r"(\d+)(?:\.(\d+))?", text)
+
+    if not match:
+        raise SystemExit(f"Não foi possível ler a versão mínima de {source}: {text!r}")
+
+    return int(match.group(1)), int(match.group(2) or 0)
+
+
+def read_pin(name: str) -> tuple[int, int]:
+    return parse_minimum((ROOT_DIR / name).read_text(encoding="utf-8"), name)
+
+
+def read_poetry_minimum() -> tuple[int, int]:
+    pyproject = tomllib.loads((BACKEND_DIR / "pyproject.toml").read_text("utf-8"))
+    constraint = pyproject["tool"]["poetry"]["requires-poetry"]
+
+    return parse_minimum(constraint, "backend/pyproject.toml (requires-poetry)")
+
+
+def build_tools() -> list[tuple[str, list[str], tuple[int, int] | None]]:
+    # nome, comando que imprime a versão, versão mínima (None = só precisa existir)
+    return [
+        ("Python", [sys.executable, "--version"], read_pin(".python-version")),
+        ("Poetry", ["poetry", "--version"], read_poetry_minimum()),
+        ("Node", ["node", "--version"], read_pin(".nvmrc")),
+        ("npm", ["npm", "--version"], None),
+        ("Docker", ["docker", "--version"], None),
+    ]
 
 
 def read_version(command: list[str]) -> tuple[int, ...] | None:
@@ -62,7 +90,7 @@ def main() -> int:
     print("Verificando ferramentas...")
     failed = False
 
-    for name, command, minimum in TOOLS:
+    for name, command, minimum in build_tools():
         version = read_version(command)
         needed = f" (mínimo {minimum[0]}.{minimum[1]})" if minimum else ""
 

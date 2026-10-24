@@ -15,7 +15,7 @@ make setup              # 1º dia: check + env (backend/.env) + install + browse
 make up / make rebuild  # db, backend e frontend via Docker Compose (o backend aplica as migrations ao iniciar)
 make back-dev           # uvicorn --reload (8000, Swagger em /docs)
 make front-dev          # Vite (5173)
-make check-all          # ruff (back) + biome (front), somente leitura
+make check-all          # ruff (back) + biome (front) + check-pins, somente leitura
 make lint-fix / make format
 make test               # pytest + vitest
 make test-all           # + Playwright E2E (o Vite sobe sozinho); visual fica de fora
@@ -44,6 +44,7 @@ O alvo para corrigir o frontend é `make front-lint-fix`.
 ## Configuração e banco
 
 - `backend/app/core/config.py` lê `backend/.env` (`make env` cria a partir de `backend/.env.example` com `SECRET_KEY` aleatória, sem sobrescrever). `DATABASE_URL` e `SECRET_KEY` são obrigatórios; importar `app` sem eles falha. No Compose, `DATABASE_URL` aponta para o host `db`; no host, `localhost` (mesmo banco, via porta publicada). O backend do Compose roda `alembic upgrade head` antes do uvicorn.
+- Versões: fonte única em `.python-version` e `.nvmrc` (raiz); o mínimo do Poetry é `requires-poetry` em `backend/pyproject.toml`. Workflows e `make check` leem desses arquivos; Dockerfiles repetem em `ARG`. Ao mudar um pin, rode `make check-pins`. O venv do backend é `backend/.venv` (`backend/poetry.toml`).
 - Testes exigem PostgreSQL real: `tests/conftest.py` aborta sem `TEST_DATABASE_URL` ou se o nome do banco não terminar em `_test`. O `srs_tour_test` nasce com volume novo (`docker/postgres/init/`); em volume antigo, `make db-create-test`. Ele deve estar migrado: `make back-test-migrate` (o CI usa `alembic upgrade head`).
 - `db_session` usa sessão real com commit e limpa cada tabela com `DELETE` no final. Novo model ⇒ adicione a tabela ao cleanup do `db_session`.
 

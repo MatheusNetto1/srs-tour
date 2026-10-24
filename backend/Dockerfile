@@ -1,4 +1,12 @@
-FROM python:3.12-slim
+# Versões: mantenha em sincronia com .python-version e backend-ci.yml
+# (POETRY_VERSION). `make check-pins` confere. Não dá para ler esses arquivos
+# aqui: o contexto de build é backend/.
+ARG PYTHON_VERSION=3.12
+ARG POETRY_VERSION=2.4.1
+
+FROM python:${PYTHON_VERSION}-slim
+
+ARG POETRY_VERSION
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -7,7 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir poetry==2.4.1
+RUN pip install --no-cache-dir poetry==${POETRY_VERSION}
 
 COPY pyproject.toml poetry.lock ./
 

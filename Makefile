@@ -15,7 +15,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: \
-	help check versions setup env require-env \
+	help check check-pins versions setup env require-env \
 	install install-back install-front \
 	up down restart build rebuild logs logs-back logs-front logs-db ps \
 	db-create-test \
@@ -80,9 +80,12 @@ help: ## Lista os comandos disponíveis
 		END { print "" }' \
 		$(MAKEFILE_LIST)
 
-check: ## Valida ferramentas e versões mínimas (Python 3.12, Node 24, Poetry 2)
+check: ## Valida ferramentas e versões mínimas (.python-version, .nvmrc, requires-poetry)
 	$(if $(shell command -v $(PYTHON) 2>/dev/null),,$(error Erro: Python não encontrado no PATH (mínimo 3.12)))
 	@$(PYTHON) $(BACKEND_DIR)/scripts/check_env.py
+
+check-pins: ## Confere se .nvmrc, .python-version, Dockerfiles e CI usam as mesmas versões
+	@$(PYTHON) $(BACKEND_DIR)/scripts/check_pins.py
 
 versions: ## Exibe versões do ambiente e das dependências
 	@echo "=========================================="
@@ -303,7 +306,7 @@ format: back-format front-format ## Formata backend e frontend
 
 format-check: back-format-check front-format-check ## Verifica a formatação do projeto
 
-check-all: back-check front-check ## Todas as verificações estáticas (somente leitura)
+check-all: back-check front-check check-pins ## Todas as verificações estáticas (somente leitura)
 
 test: back-test front-test ## Testes do backend + frontend (sem E2E)
 
