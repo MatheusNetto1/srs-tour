@@ -53,6 +53,10 @@ TEST_DB_NAME ?= srs_tour_test
 # Argumentos extras do `playwright install`; no Linux/CI: --with-deps
 PLAYWRIGHT_INSTALL_ARGS ?=
 
+# Banco de teste visto de dentro da rede do Compose (host `db`), usado pelos
+# alvos docker-*. No host, quem manda é o TEST_DATABASE_URL de backend/.env.
+DOCKER_TEST_DATABASE_URL ?= postgresql+psycopg://$(DB_USER):postgres@db:5432/$(TEST_DB_NAME)
+
 # Argumentos extras repassados aos alvos de teste: make back-test ARGS="-k nome"
 ARGS ?=
 
@@ -63,6 +67,11 @@ CONFIRM ?=
 # $(1) alvo, $(2) o que será destruído (sem vírgulas).
 define require_confirm
 $(if $(filter 1,$(CONFIRM)),,$(error Erro: 'make $(1)' é destrutivo: $(2). Se é isso mesmo que você quer: make $(1) CONFIRM=1))
+endef
+
+# Falha com mensagem clara se o backend não está rodando no Compose.
+define require_backend_up
+$(if $(findstring backend,$(shell docker compose ps --status running --services 2>/dev/null)),,$(error Erro: o container 'backend' não está rodando. Suba o ambiente com: make up))
 endef
 
 
@@ -246,11 +255,34 @@ back-migration-current: ## Exibe a revisão atual do banco
 back-migration-heads: ## Exibe as heads das migrations
 	@$(BACK_RUN) alembic heads
 
+back-migration-single-head: ## Falha se houver mais de uma head de migrations (sem banco)
+	@$(BACK_RUN) python scripts/check_migration_heads.py
+
 back-migration-check: ## Verifica se os models divergem das migrations
 	@$(BACK_RUN) alembic check
 
 seed: ## Popula o banco de desenvolvimento (estrutura pronta, sem dados ainda)
 	@$(BACK_RUN) python -m scripts.seed
+
+
+##@ Backend no container (sem Poetry no host; exigem `make up`)
+
+docker-seed: ## Popula o banco de desenvolvimento dentro do container
+	$(call require_backend_up)
+	@docker compose exec -T backend python -m scripts.seed
+
+docker-back-test: ## Executa os testes dentro do container (ARGS="-k nome")
+	$(call require_backend_up)
+	@docker compose exec -T -e TEST_DATABASE_URL=$(DOCKER_TEST_DATABASE_URL) backend pytest $(ARGS)
+
+docker-back-test-migrate: db-create-test ## Cria (se preciso) e migra o banco de teste dentro do container
+	$(call require_backend_up)
+	@docker compose exec -T -e TEST_DATABASE_URL=$(DOCKER_TEST_DATABASE_URL) backend python -m scripts.migrate_test_db
+
+docker-back-migration: ## Cria migration numerada dentro do container (m="create x table")
+	$(call require_backend_up)
+	$(if $(m),,$(error Erro: informe a mensagem da migration. Exemplo: make docker-back-migration m="create users table"))
+	@docker compose exec -T backend python scripts/create_migration.py "$(m)"
 
 
 ##@ Frontend

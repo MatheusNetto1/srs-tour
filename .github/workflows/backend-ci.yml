@@ -87,6 +87,9 @@ jobs:
       - name: Ruff (lint e formatação)
         run: make back-check
 
+      - name: Uma única head de migrations
+        run: make back-migration-single-head
+
       # O Postgres é um service do Actions (não o Compose): não usar back-test-migrate.
       - name: Migrations no banco de teste
         run: make back-test-migrate-only

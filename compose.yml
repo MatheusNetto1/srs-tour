@@ -2,9 +2,8 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: srs-tour-backend
     ports:
-      - "8000:8000"
+      - "${BACKEND_HOST_PORT:-8000}:8000"
     volumes:
       - ./backend:/app
     # Em dev aplica as migrations antes de iniciar. DATABASE_URL (abaixo, host
@@ -20,22 +19,43 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # A imagem python:slim não tem curl. O start_period cobre as migrations.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/health')
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   frontend:
     build:
       context: ./frontend
-    container_name: srs-tour-frontend
     ports:
-      - "5173:5173"
+      - "${FRONTEND_HOST_PORT:-5173}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      # Bind mount no Windows não propaga eventos de arquivo ao container.
+      DEV_USE_POLLING: "true"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1 e não localhost: no Alpine o wget resolve para ::1 e o Vite
+      # escuta só em IPv4.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5173/ > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   db:
     image: postgres:16-alpine
-    container_name: srs-tour-db
     environment:
       POSTGRES_DB: srs_tour
       POSTGRES_USER: postgres

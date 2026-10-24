@@ -31,6 +31,12 @@ Para rodar os testes do backend, o banco de teste precisa estar migrado:
 `make back-test-migrate`. A lista completa de comandos está em `make help` e na
 seção [Comandos](AGENTS.md#comandos) do `AGENTS.md`.
 
+O backend roda de dois jeitos: **Poetry no host** (`make back-test`, `make seed`,
+`make back-migration`, exigem `make install-back`) ou **tudo em container**
+(`make docker-back-test`, `make docker-seed`, `make docker-back-migration m="..."`,
+exigem apenas `make up`). Para dois clones ou branches ao mesmo tempo, mude
+`COMPOSE_PROJECT_NAME` e as portas `*_HOST_PORT` (veja `.env.example`).
+
 ## VS Code
 
 O repositório versiona uma configuração mínima em `.vscode/` (`extensions.json`,
@@ -105,7 +111,9 @@ plugin, mas **os formatadores são a autoridade**: Biome no frontend e Ruff no b
    linha de atribuição a IA (`Co-Authored-By`, "Generated with…").
 4. **Rode as verificações antes de abrir o PR:** `make check-all` e `make test`
    (`make test-all` se o fluxo tem E2E). Mudou model? Gere a migration com
-   `make back-migration` e revise o arquivo.
+   `make back-migration` (ou `make docker-back-migration`) e revise o arquivo.
+   O CI reprova mais de uma head de migrations (`make back-migration-single-head`):
+   se acusar, ajuste o `down_revision` da sua migration.
 5. **Abra o PR** para `develop` (ou para a branch base, se for [empilhado](#prs-empilhados)).
    O template já traz o checklist. O título segue `[Área] [Tipo] Título` (listas em
    [Git, PRs e CI](AGENTS.md#git-prs-e-ci)) e **vira o commit em `develop`**, então

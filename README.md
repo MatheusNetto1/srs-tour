@@ -136,6 +136,30 @@ Os serviços ficam disponíveis em:
 > `TEST_DATABASE_URL` em `backend/.env` ao executar o backend fora do Docker.
 > A comunicação entre containers continua usando `db:5432`.
 
+As portas do backend e do frontend também são parametrizadas
+(`BACKEND_HOST_PORT`, `FRONTEND_HOST_PORT`; padrões 8000 e 5173), e o
+`compose.yml` não fixa `container_name`. Para rodar dois clones ou branches ao
+mesmo tempo, mude `COMPOSE_PROJECT_NAME` e as portas em um deles (exemplo em
+[`.env.example`](.env.example); copie para `.env` na raiz). Os três serviços têm
+`healthcheck`: `make ps` mostra `healthy` quando estão prontos. O frontend em
+container usa polling (`DEV_USE_POLLING=true`) para o hot reload funcionar no
+Windows.
+
+### Backend sem Poetry no host
+
+Com o ambiente no ar (`make up`), os alvos `docker-*` rodam dentro do container
+do backend e dispensam o `make install-back`:
+
+``` bash
+make docker-back-test-migrate        # cria (se preciso) e migra o banco de teste
+make docker-back-test ARGS="-k nome" # pytest no container
+make docker-seed                     # seed no container
+make docker-back-migration m="create x table"
+```
+
+Os alvos sem prefixo (`back-test`, `seed`, `back-migration`...) continuam
+rodando no host, com Poetry.
+
 Ao iniciar, o container do backend aplica `alembic upgrade head` no banco de
 desenvolvimento. Depois de puxar migrations novas, rode `make restart` (ou
 `make up`) para aplicá-las. `make back-migrate`, no host, também funciona e
@@ -292,7 +316,7 @@ make clean-all CONFIRM=1   # clean + node_modules + .venv
 make db-reset CONFIRM=1    # apaga o volume do Postgres e recria banco, teste e migrations
 ```
 
-`make seed` já existe, mas ainda não insere dados.
+`make seed` já existe, mas ainda não insere dados (`make docker-seed` faz o mesmo dentro do container).
 
 ## CI
 

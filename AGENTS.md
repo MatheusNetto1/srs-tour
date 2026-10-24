@@ -24,8 +24,12 @@ make back-test-migrate  # cria o banco de teste se faltar e aplica migrations ne
 make back-migration m="create x table"   # autogenerate + numeração 000N_
 make back-migrate / make back-migrate-down
 make seed               # estrutura pronta, sem dados ainda
+make back-migration-single-head   # falha se houver mais de uma head do Alembic (sem banco; roda no CI)
+make docker-seed / docker-back-test / docker-back-test-migrate / docker-back-migration m="..."   # o mesmo dentro do container backend (sem Poetry no host; exigem make up)
 make db-reset CONFIRM=1 / make clean-all CONFIRM=1   # destrutivos: exigem CONFIRM=1
 ```
+
+Dois fluxos para o backend: **Poetry no host** (`back-*`, `seed`) ou **tudo em container** (`docker-*`, que usam `docker compose exec` e falham com mensagem clara se o backend não estiver no ar; `docker-back-test*` usam `TEST_DATABASE_URL` com o host `db`). Aceitam `ARGS=`. O `compose.yml` não fixa `container_name`: para dois clones ao mesmo tempo, mude `COMPOSE_PROJECT_NAME` e as portas `POSTGRES_HOST_PORT`, `BACKEND_HOST_PORT` e `FRONTEND_HOST_PORT` (exemplo em `.env.example`). O frontend em container usa polling (`DEV_USE_POLLING=true`) porque o bind mount do Windows não propaga eventos de arquivo.
 
 Convenção: `*-check` só lê (lint + formato); `*-lint-fix` e `*-format` corrigem. Alvos de teste aceitam `ARGS=` (`make back-test ARGS="-k nome"`). O `front-visual-update` exige `VISUAL_BASE_URL` e `VISUAL_ROUTE_MODE`.
 
@@ -85,7 +89,7 @@ Tudo sob `/api/v1`; paths no plural; router só valida entrada, injeta dependên
 - **Nunca adicione linha de atribuição a IA** (`Co-Authored-By`, "Generated with…" etc.) em commits, PRs ou descrições, mesmo que a ferramenta tenha esse comportamento por padrão.
 - `.gitattributes` mantém LF; CRLF faz o Biome acusar `␍`. Nunca commite `.env`, secrets ou tokens.
 - CI: todo PR (qualquer base, inclusive empilhado), push em `main`/`develop` e `workflow_dispatch`; sem filtro de `paths` (checks obrigatórios não podem ficar pendentes). Os workflows chamam alvos `make`, a mesma definição do uso local.
-  - `backend-ci.yml`: job `Backend` (`back-check`, `back-test-migrate-only`, `back-migration-check`, `back-test`; Postgres é service do Actions, por isso não usa `back-test-migrate`) e `Backend Docker Build`.
+  - `backend-ci.yml`: job `Backend` (`back-check`, `back-migration-single-head`, `back-test-migrate-only`, `back-migration-check`, `back-test`; Postgres é service do Actions, por isso não usa `back-test-migrate`) e `Backend Docker Build`.
   - `frontend-ci.yml`: `Frontend` (`front-check`, `front-test`, `front-build`) e `Frontend E2E` (Playwright; só precisa do Vite). Visual fica fora do CI.
   - `pr-conventions.yml`: reprova PR para `develop`/`main` com título ou branch fora do padrão acima (ignora bots).
   - Disparo manual: `gh workflow run "Backend CI" --ref <branch>` (idem `"Frontend CI"`).
