@@ -1,4 +1,8 @@
-FROM node:24-alpine
+# Mantenha em sincronia com .nvmrc (`make check-pins` confere). O contexto de
+# build é frontend/, então o arquivo da raiz não está acessível aqui.
+ARG NODE_VERSION=24
+
+FROM node:${NODE_VERSION}-alpine
 
 WORKDIR /app
 
