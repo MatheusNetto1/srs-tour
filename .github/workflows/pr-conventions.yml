@@ -1,0 +1,61 @@
+name: PR Conventions
+
+# Valida título e branch do PR (merge por squash: o título vira o commit).
+# Título e branch chegam por variáveis de ambiente, nunca interpolados no script.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [develop, main]
+
+concurrency:
+  group: pr-conventions-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  conventions:
+    name: PR Conventions
+    runs-on: ubuntu-latest
+    # Bots (Dependabot etc.) não seguem o padrão do time.
+    if: github.event.pull_request.user.type != 'Bot'
+
+    steps:
+      - name: Validar título e branch
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          title_re='^\[(Backend|Frontend|Fullstack|Infra|Docs)\] \[(Feature|Fix|Refactor|Test|Docs|Chore|CI)\] [^[:space:]].*$'
+          branch_re='^[a-z]{2,3}/(feat|fix|refactor|test|docs|chore|ci)/[a-z0-9]+(-[a-z0-9]+)*$'
+          failed=0
+
+          if ! [[ "$PR_TITLE" =~ $title_re ]]; then
+            failed=1
+            {
+              echo "::error title=Título do PR inválido::\"$PR_TITLE\" não segue [Área] [Tipo] Título"
+              echo "Título inválido: $PR_TITLE"
+              echo "  Formato: [Área] [Tipo] Título"
+              echo "  Área: Backend | Frontend | Fullstack | Infra | Docs"
+              echo "  Tipo: Feature | Fix | Refactor | Test | Docs | Chore | CI"
+              echo "  Exemplo: [Backend] [Feature] Adiciona CRUD de estabelecimentos"
+            } >&2
+          fi
+
+          if ! [[ "$PR_BRANCH" =~ $branch_re ]]; then
+            failed=1
+            {
+              echo "::error title=Nome da branch inválido::\"$PR_BRANCH\" não segue <iniciais>/<tipo>/<descricao>"
+              echo "Branch inválida: $PR_BRANCH"
+              echo "  Formato: <iniciais>/<tipo>/<descricao-em-kebab-case>"
+              echo "  Iniciais: 2 ou 3 letras minúsculas"
+              echo "  Tipo: feat | fix | refactor | test | docs | chore | ci"
+              echo "  Exemplo: mn/feat/crud-estabelecimentos"
+              echo "  Para renomear: git branch -m <novo-nome> e abra um novo PR (o nome do branch de um PR aberto não muda)."
+            } >&2
+          fi
+
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Título e branch OK."

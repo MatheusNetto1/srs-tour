@@ -1,26 +1,25 @@
 name: Frontend CI
 
+# Sem filtro de paths: os checks são obrigatórios na proteção de branch e um
+# workflow pulado por path deixaria o check pendente, bloqueando o merge.
+# Sem filtro de branches em pull_request: PRs empilhados também rodam.
+# Testes visuais ficam fora do CI (decisão D10).
 on:
   pull_request:
-    branches: [develop, main]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-ci.yml"
   push:
     branches: [develop, main]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-ci.yml"
+  workflow_dispatch:
 
 concurrency:
-  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   frontend:
+    name: Frontend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,3 +37,39 @@ jobs:
         run: make front-test
       - name: Build
         run: make front-build
+
+  e2e:
+    name: Frontend E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instalar dependências
+        run: npm ci
+        working-directory: frontend
+      - name: Cache dos browsers do Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+      # --with-deps instala as bibliotecas de sistema do Linux (rodam mesmo com cache de browsers).
+      - name: Instalar browsers do Playwright
+        run: make front-install-browsers PLAYWRIGHT_INSTALL_ARGS=--with-deps
+      # As specs só precisam do Vite (webServer do Playwright), sem backend.
+      - name: Testes E2E (Playwright)
+        run: make front-e2e ARGS="--reporter=list,html --trace=retain-on-failure"
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+      - name: Publicar relatório e traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 7
