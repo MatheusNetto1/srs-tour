@@ -3,12 +3,9 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.reports import repository
+from app.reports.exceptions import ReportNotFoundError
 from app.reports.models import Report, ReportStatus
 from app.reports.schemas import ReportCreate, ReportUpdate
-
-
-class ReportNotFoundError(Exception):
-    pass
 
 
 def list_reports(
@@ -17,14 +14,22 @@ def list_reports(
     year: int | None = None,
     category: str | None = None,
     only_published: bool = True,
+    status: ReportStatus | str | None = None,
+    q: str | None = None,
 ) -> list[Report]:
-    status = ReportStatus.PUBLISHED.value if only_published else None
+    if only_published:
+        resolved_status: str | None = ReportStatus.PUBLISHED.value
+    elif status is not None:
+        resolved_status = str(status)
+    else:
+        resolved_status = None
 
     return repository.list_reports(
         db,
         year=year,
         category=category,
-        status=status,
+        status=resolved_status,
+        q=q,
     )
 
 
