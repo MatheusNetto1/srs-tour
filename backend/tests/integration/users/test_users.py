@@ -49,6 +49,7 @@ def test_create_user(client: TestClient) -> None:
 
     assert data["name"] == "Administrador"
     assert data["email"] == "admin@example.com"
+    assert data["role"] == "admin"
     assert data["is_active"] is True
     assert "id" in data
     assert "created_at" in data
