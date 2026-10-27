@@ -5,12 +5,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, delete
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.auth.dependencies import require_admin
 from app.core.config import settings
 from app.core.dependencies import get_db
 from app.indicators.models import Indicator
 from app.main import app
 from app.tourism.models import TourismEstablishment
-from app.users.models import User
+from app.users.models import User, UserRole
 
 if settings.test_database_url is None:
     raise RuntimeError("TEST_DATABASE_URL must be configured to run integration tests.")
@@ -48,6 +49,32 @@ def db_session() -> Generator[Session, None, None]:
 
 @pytest.fixture
 def client(
+    db_session: Session,
+) -> Generator[TestClient, None, None]:
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    def override_require_admin() -> User:
+        return User(
+            name="Administrador de teste",
+            email="admin-teste@example.com",
+            password_hash="não utilizado",
+            role=UserRole.ADMIN,
+            is_active=True,
+        )
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[require_admin] = override_require_admin
+
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def anonymous_client(
     db_session: Session,
 ) -> Generator[TestClient, None, None]:
     def override_get_db() -> Generator[Session, None, None]:

@@ -27,10 +27,15 @@ class UnauthorizedError(DomainError):
     code = "unauthorized"
 
 
+class ForbiddenError(DomainError):
+    code = "forbidden"
+
+
 ERROR_STATUS_CODES: dict[type[DomainError], int] = {
     NotFoundError: status.HTTP_404_NOT_FOUND,
     ConflictError: status.HTTP_409_CONFLICT,
     UnauthorizedError: status.HTTP_401_UNAUTHORIZED,
+    ForbiddenError: status.HTTP_403_FORBIDDEN,
 }
 
 

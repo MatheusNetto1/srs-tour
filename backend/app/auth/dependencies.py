@@ -4,8 +4,9 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 
 from app.auth import service
+from app.auth.exceptions import AuthForbiddenError
 from app.core.dependencies import DbSession
-from app.users.models import User
+from app.users.models import User, UserRole
 
 # Caminho absoluto: o Swagger resolve um tokenUrl relativo a partir de
 # /openapi.json, o que descartaria o prefixo /api/v1.
@@ -25,3 +26,10 @@ def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def require_admin(current_user: CurrentUser) -> User:
+    if current_user.role != UserRole.ADMIN:
+        raise AuthForbiddenError
+
+    return current_user
