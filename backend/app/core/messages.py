@@ -4,6 +4,8 @@ MESSAGES: dict[str, dict[str, str]] = {
     "pt-BR": {
         "auth.invalid_credentials": "E-mail ou senha inválidos.",
         "auth.invalid_token": "Não foi possível validar as credenciais.",
+        "auth.forbidden": "Você não tem permissão para realizar esta ação.",
+        "auth.token_expired": "Sessão expirada. Faça login novamente.",
         "indicator.not_found": "Indicador não encontrado.",
         "user.not_found": "Usuário não encontrado.",
         "user.email_already_exists": "Já existe um usuário com este e-mail.",
