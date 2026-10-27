@@ -86,6 +86,16 @@ tabelas. Dentro do container, `DATABASE_URL` aponta para o host `db`; no host
 (`make back-migrate`, `make back-dev`) ela usa `localhost`, e os dois acessam o
 mesmo banco.
 
+Em ambientes diferentes de `dev`, a `SECRET_KEY` deve ter pelo menos 32
+caracteres e não pode usar o valor `change-me`. O `make env` cria uma chave
+forte automaticamente. O token de acesso expira em 480 minutos (8 horas) por
+padrão.
+
+Quem já possui um `backend/.env` antigo deve adicionar `APP_ENV=dev` para o
+ambiente local e atualizar `ACCESS_TOKEN_EXPIRE_MINUTES=480`. Uma chave gerada
+pelo `make env`, com mais de 32 caracteres, continua válida mesmo sem
+`APP_ENV`.
+
 O backend e o frontend têm `healthcheck` no Compose (`make ps` mostra
 `healthy`). Sem Poetry no host, use os alvos que rodam dentro do container,
 com o ambiente no ar (`make up`): `make docker-back-test-migrate`,
@@ -166,9 +176,14 @@ poetry run pytest
 
 ## Seed
 
-`make seed` executa `backend/scripts/seed.py`, que ainda não insere nada.
-Veja a docstring do script para adicionar dados de forma idempotente.
-Dentro do container: `make docker-seed`.
+`make seed` cria o administrador inicial quando `ADMIN_EMAIL` e
+`ADMIN_PASSWORD` estão configurados no `backend/.env`. O seed é idempotente:
+se o e-mail já existir, nenhum dado é alterado; um usuário inativo nunca é
+reativado implicitamente. Dentro do container, use `make docker-seed`.
+
+As operações de usuários ficam em `/api/v1/admin/users`. Todo endpoint sob
+`/api/v1/admin` exige um token de usuário com papel `admin`; a antiga rota
+`/api/v1/users` não está mais disponível.
 
 Os testes do backend utilizam Pytest. Requisições HTTP à aplicação podem
 ser testadas através do `TestClient` do FastAPI/Starlette, utilizando
