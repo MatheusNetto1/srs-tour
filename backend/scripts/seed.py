@@ -22,10 +22,11 @@ from collections.abc import Callable
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
+from scripts.seed_admin import seed_admin_user
 
 Seeder = Callable[[Session], None]
 
-SEEDERS: list[Seeder] = []
+SEEDERS: list[Seeder] = [seed_admin_user]
 
 
 def main() -> None:
