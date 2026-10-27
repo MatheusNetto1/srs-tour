@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.security import verify_password
 from app.users.models import User
 
-BASE_URL = "/api/v1/users"
+BASE_URL = "/api/v1/admin/users"
 
 EMAIL_CONFLICT_DETAIL = "Já existe um usuário com este e-mail."
 NOT_FOUND_DETAIL = "Usuário não encontrado."
@@ -504,3 +504,9 @@ def test_database_rejects_emails_that_differ_only_by_case(
         assert "uq_users_email_lower" in str(error.orig)
     else:
         raise AssertionError("Expected the database to reject the duplicate e-mail.")
+
+
+def test_old_public_users_route_is_not_available(client: TestClient) -> None:
+    response = client.get("/api/v1/users")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
