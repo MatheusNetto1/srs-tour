@@ -48,7 +48,7 @@ O alvo para corrigir o frontend é `make front-lint-fix`.
 
 ## Configuração e banco
 
-- `backend/app/core/config.py` lê `backend/.env` (`make env` cria a partir de `backend/.env.example` com `SECRET_KEY` aleatória, sem sobrescrever). `DATABASE_URL` e `SECRET_KEY` são obrigatórios; importar `app` sem eles falha. No Compose, `DATABASE_URL` aponta para o host `db`; no host, `localhost` (mesmo banco, via porta publicada). O backend do Compose roda `alembic upgrade head` antes do uvicorn.
+- `backend/app/core/config.py` lê `backend/.env` (`make env` cria a partir de `backend/.env.example` com `SECRET_KEY` aleatória, sem sobrescrever). `DATABASE_URL` e `SECRET_KEY` são obrigatórios; importar `app` sem eles falha. `APP_ENV` assume `production`; somente `dev` aceita chave fraca, e os demais ambientes exigem ao menos 32 caracteres e rejeitam `change-me`. No Compose, `DATABASE_URL` aponta para o host `db`; no host, `localhost` (mesmo banco, via porta publicada). O backend do Compose roda `alembic upgrade head` antes do uvicorn.
 - Versões: fonte única em `.python-version` e `.nvmrc` (raiz); o mínimo do Poetry é `requires-poetry` em `backend/pyproject.toml`. Workflows e `make check` leem desses arquivos; Dockerfiles repetem em `ARG`. Ao mudar um pin, rode `make check-pins`. O venv do backend é `backend/.venv` (`backend/poetry.toml`).
 - Testes exigem PostgreSQL real: `tests/conftest.py` aborta sem `TEST_DATABASE_URL` ou se o nome do banco não terminar em `_test`. O `srs_tour_test` nasce com volume novo (`docker/postgres/init/`); em volume antigo, `make db-create-test`. Ele deve estar migrado: `make back-test-migrate` (o CI usa `alembic upgrade head`).
 - `db_session` usa sessão real com commit e limpa cada tabela com `DELETE` no final. Novo model ⇒ adicione a tabela ao cleanup do `db_session`.
@@ -60,7 +60,7 @@ O alvo para corrigir o frontend é `make front-lint-fix`.
 - Erros: exceções de domínio em `exceptions.py` herdam de `NotFoundError`/`ConflictError`/`UnauthorizedError` (`app/core/errors.py`) com `code` estável (ex.: `user.not_found`); o handler global converte em 404/409/401. Mensagens HTTP em `app/core/messages.py`. Código novo usa esse padrão; `tourism` e `reports` ainda usam `HTTPException`/exceção local.
 - Novo model: importe em `app/models.py` (usado por `alembic/env.py`) e gere a migration.
 - Migrations: sempre `make back-migration`; revise o arquivo gerado; nunca edite migration já integrada (crie outra); nunca `Base.metadata.create_all()` no lugar do Alembic.
-- Auth: hash e JWT em `app/core/security.py` (não reimplementar). Rotas protegidas recebem `current_user: CurrentUser` (`app/auth/dependencies.py`).
+- Auth: hash e JWT em `app/core/security.py` (não reimplementar). `User.role` usa `UserRole`; o agrupador `/api/v1/admin` aplica `require_admin` em um único ponto. Rotas que precisam apenas de autenticação recebem `current_user: CurrentUser` (`app/auth/dependencies.py`). O admin inicial é criado de forma idempotente por `make seed`, usando `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
 - Soft delete: estabelecimentos usam `is_active`; `DELETE` só desativa; consultas públicas ignoram inativos; nunca reutilizar registro inativo implicitamente.
 - Ruff: line-length 88, regras `E,F,I,UP,B`, alvo py312.
 
@@ -71,7 +71,7 @@ Tudo sob `/api/v1`; paths no plural; router só valida entrada, injeta dependên
 ## Testes
 
 - Backend: integração em `backend/tests/integration/<dominio>/test_<recurso>.py`; unitários (sem banco) em `backend/tests/unit/<modulo>/`; health em `backend/tests/test_health.py`.
-- Use apenas as fixtures `client` e `db_session` de `tests/conftest.py`. Proibido: SQLite, `Base.metadata.create_all()`/`drop_all()`, `TestClient(app)`, engines ou sessões próprias, mock do banco.
+- Use apenas as fixtures `client`, `anonymous_client` e `db_session` de `tests/conftest.py`. `client` substitui `require_admin` por um admin fictício; `anonymous_client` mantém a autenticação real para testes 401/403. Proibido: SQLite, `Base.metadata.create_all()`/`drop_all()`, `TestClient(app)`, engines ou sessões próprias, mock do banco.
 - Estilo: constante `BASE_URL`, helpers `create_<entidade>(client, ...)` em vez de fixtures de entidade, testes `(client: TestClient) -> None`, asserts com `status.HTTP_*` (nunca número literal). Cubra o sucesso e os principais erros esperados.
 - Persistência (hash, normalização, exclusão lógica): confirme no banco via `db_session`; use `db_session.expire_all()` quando precisar reler do PostgreSQL. Testes independentes da ordem e repetíveis sem acumular dados.
 - Frontend: Vitest + Testing Library em `frontend/tests/integration/` (helpers em `tests/utils/`, setup em `tests/setup/vitest.ts`), Playwright em `tests/e2e/`. Prefira `getByRole`/`getByLabelText`.

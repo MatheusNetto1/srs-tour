@@ -5,10 +5,10 @@ from app.users import service
 from app.users.models import User
 from app.users.schemas import UserCreate, UserResponse, UserUpdate
 
-router = APIRouter()
+admin_router = APIRouter()
 
 
-@router.get(
+@admin_router.get(
     "",
     response_model=list[UserResponse],
 )
@@ -16,7 +16,7 @@ def list_users(db: DbSession) -> list[User]:
     return service.list_users(db)
 
 
-@router.get(
+@admin_router.get(
     "/{user_id}",
     response_model=UserResponse,
 )
@@ -27,7 +27,7 @@ def get_user(
     return service.get_user(db, user_id)
 
 
-@router.post(
+@admin_router.post(
     "",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
@@ -39,7 +39,7 @@ def create_user(
     return service.create_user(db, data)
 
 
-@router.put(
+@admin_router.put(
     "/{user_id}",
     response_model=UserResponse,
 )
@@ -51,7 +51,7 @@ def update_user(
     return service.update_user(db, user_id, data)
 
 
-@router.post(
+@admin_router.post(
     "/{user_id}/activate",
     response_model=UserResponse,
 )
@@ -62,7 +62,7 @@ def activate_user(
     return service.activate_user(db, user_id)
 
 
-@router.delete(
+@admin_router.delete(
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
