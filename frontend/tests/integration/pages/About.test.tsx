@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { About } from "../../../src/pages/About/About";
@@ -143,5 +143,82 @@ describe("About page", () => {
 				name: /conselho municipal de turismo/i,
 			}),
 		).toBeInTheDocument();
+	});
+
+	it("shows the Cadastur and FNRH Digital guidance with official links", () => {
+		render(<About />);
+
+		expect(
+			screen.getByRole("heading", {
+				level: 2,
+				name: "Cadastur e FNRH Digital",
+			}),
+		).toBeInTheDocument();
+
+		expect(
+			screen.getByRole("heading", { level: 3, name: "Cadastur" }),
+		).toBeInTheDocument();
+
+		expect(
+			screen.getByRole("heading", { level: 3, name: "FNRH Digital" }),
+		).toBeInTheDocument();
+
+		const cadastur = screen.getByRole("link", { name: /acessar o cadastur/i });
+
+		expect(cadastur).toHaveAttribute("href", "https://cadastur.turismo.gov.br");
+		expect(cadastur).toHaveAttribute("target", "_blank");
+		expect(cadastur).toHaveAttribute("rel", "noopener noreferrer");
+		expect(cadastur).toHaveAccessibleName(/abre em nova aba/i);
+
+		const fnrh = screen.getByRole("link", { name: /acessar a fnrh digital/i });
+
+		expect(fnrh).toHaveAttribute("href", "https://fnrh.turismo.gov.br");
+		expect(fnrh).toHaveAttribute("target", "_blank");
+		expect(fnrh).toHaveAttribute("rel", "noopener noreferrer");
+		expect(fnrh).toHaveAccessibleName(/abre em nova aba/i);
+
+		expect(
+			screen.getByText(
+				/o observatório não se integra ao cadastur nem à fnrh digital/i,
+			),
+		).toBeInTheDocument();
+	});
+
+	it("groups the institutional logos by level", () => {
+		render(<About />);
+
+		const groups = [
+			{
+				label: "Marca do projeto",
+				logos: [
+					/observatório do turismo de santa rita do sapucaí/i,
+					/santa rita do sapucaí – cidade criativa, cidade feliz/i,
+				],
+			},
+			{
+				label: "Realização e apoio",
+				logos: [
+					/prefeitura municipal de santa rita do sapucaí/i,
+					/secretaria municipal de cultura, esporte, lazer e turismo/i,
+					/conselho municipal de turismo/i,
+				],
+			},
+			{
+				label: "Contexto regional",
+				logos: [/circuito turístico caminhos da mantiqueira/i, /minas gerais/i],
+			},
+		];
+
+		for (const group of groups) {
+			const container = screen.getByText(group.label).parentElement;
+
+			expect(container).not.toBeNull();
+
+			for (const name of group.logos) {
+				expect(
+					within(container as HTMLElement).getByRole("img", { name }),
+				).toBeInTheDocument();
+			}
+		}
 	});
 });

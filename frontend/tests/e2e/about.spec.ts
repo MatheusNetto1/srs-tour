@@ -59,4 +59,58 @@ test.describe("About page", () => {
 			}),
 		).toBeVisible();
 	});
+
+	test("shows the Cadastur and FNRH Digital section", async ({ page }) => {
+		await page.goto("/sobre");
+
+		const main = page.getByRole("main");
+
+		await expect(
+			main.getByRole("heading", { name: "Cadastur e FNRH Digital" }),
+		).toBeVisible();
+
+		const links = [
+			{ name: /acessar o cadastur/i, href: "https://cadastur.turismo.gov.br" },
+			{
+				name: /acessar a fnrh digital/i,
+				href: "https://fnrh.turismo.gov.br",
+			},
+		];
+
+		// Só confere os atributos: o teste não navega para os sites externos.
+		for (const { name, href } of links) {
+			const link = main.getByRole("link", { name });
+
+			await expect(link).toBeVisible();
+			await expect(link).toHaveAttribute("href", href);
+			await expect(link).toHaveAttribute("target", "_blank");
+			await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+		}
+
+		await expect(
+			main.getByText(/o observatório não se integra ao cadastur/i),
+		).toBeVisible();
+	});
+
+	test("shows the logos of the three institutional levels", async ({
+		page,
+	}) => {
+		await page.goto("/sobre");
+
+		const main = page.getByRole("main");
+
+		for (const name of [
+			/santa rita do sapucaí – cidade criativa, cidade feliz/i,
+			/prefeitura municipal de santa rita do sapucaí/i,
+			/circuito turístico caminhos da mantiqueira/i,
+			/minas gerais/i,
+		]) {
+			const logo = main.getByRole("img", { name });
+
+			await expect(logo).toBeVisible();
+			expect(
+				await logo.evaluate((img: HTMLImageElement) => img.naturalWidth),
+			).toBeGreaterThan(0);
+		}
+	});
 });
