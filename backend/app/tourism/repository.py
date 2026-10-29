@@ -27,12 +27,18 @@ def create_establishment(
 def list_establishments(
     db: Session,
     category: str | None = None,
+    is_active: bool | None = None,
 ) -> list[TourismEstablishment]:
     statement = select(TourismEstablishment)
 
     if category is not None:
         statement = statement.where(
             TourismEstablishment.category == category,
+        )
+
+    if is_active is not None:
+        statement = statement.where(
+            TourismEstablishment.is_active == is_active,
         )
 
     statement = statement.order_by(TourismEstablishment.id)
@@ -43,8 +49,17 @@ def list_establishments(
 def get_establishment(
     db: Session,
     establishment_id: int,
+    *,
+    only_active: bool = False,
 ) -> TourismEstablishment | None:
-    return db.get(TourismEstablishment, establishment_id)
+    statement = select(TourismEstablishment).where(
+        TourismEstablishment.id == establishment_id,
+    )
+
+    if only_active:
+        statement = statement.where(TourismEstablishment.is_active.is_(True))
+
+    return db.scalar(statement)
 
 
 def update_establishment(
@@ -52,9 +67,8 @@ def update_establishment(
     establishment: TourismEstablishment,
     data: TourismEstablishmentUpdate,
 ) -> TourismEstablishment:
-    establishment.name = data.name
-    establishment.category = data.category
-    establishment.is_active = data.is_active
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(establishment, field, value)
 
     db.commit()
     db.refresh(establishment)
