@@ -1,7 +1,7 @@
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.tourism import repository
+from app.tourism.exceptions import TourismEstablishmentNotFoundError
 from app.tourism.models import TourismEstablishment
 from app.tourism.schemas import (
     TourismEstablishmentCreate,
@@ -19,24 +19,25 @@ def create_establishment(
 def list_establishments(
     db: Session,
     category: str | None = None,
+    is_active: bool | None = None,
 ) -> list[TourismEstablishment]:
-    return repository.list_establishments(db, category)
+    return repository.list_establishments(db, category, is_active)
 
 
 def get_establishment(
     db: Session,
     establishment_id: int,
+    *,
+    only_active: bool = False,
 ) -> TourismEstablishment:
     establishment = repository.get_establishment(
         db,
         establishment_id,
+        only_active=only_active,
     )
 
     if establishment is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tourism establishment not found.",
-        )
+        raise TourismEstablishmentNotFoundError
 
     return establishment
 

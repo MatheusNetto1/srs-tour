@@ -9,9 +9,10 @@ from app.tourism.schemas import (
 )
 
 router = APIRouter()
+admin_router = APIRouter()
 
 
-@router.post(
+@admin_router.post(
     "/establishments",
     response_model=TourismEstablishmentResponse,
     status_code=status.HTTP_201_CREATED,
@@ -31,7 +32,7 @@ def list_establishments(
     db: DbSession,
     category: str | None = Query(default=None),
 ) -> list[TourismEstablishmentResponse]:
-    return service.list_establishments(db, category)
+    return service.list_establishments(db, category, is_active=True)
 
 
 @router.get(
@@ -42,10 +43,33 @@ def get_establishment(
     establishment_id: int,
     db: DbSession,
 ) -> TourismEstablishmentResponse:
+    return service.get_establishment(db, establishment_id, only_active=True)
+
+
+@admin_router.get(
+    "/establishments",
+    response_model=list[TourismEstablishmentResponse],
+)
+def list_admin_establishments(
+    db: DbSession,
+    category: str | None = Query(default=None),
+    is_active: bool | None = Query(default=None),
+) -> list[TourismEstablishmentResponse]:
+    return service.list_establishments(db, category, is_active)
+
+
+@admin_router.get(
+    "/establishments/{establishment_id}",
+    response_model=TourismEstablishmentResponse,
+)
+def get_admin_establishment(
+    establishment_id: int,
+    db: DbSession,
+) -> TourismEstablishmentResponse:
     return service.get_establishment(db, establishment_id)
 
 
-@router.put(
+@admin_router.put(
     "/establishments/{establishment_id}",
     response_model=TourismEstablishmentResponse,
 )
@@ -61,7 +85,7 @@ def update_establishment(
     )
 
 
-@router.delete(
+@admin_router.delete(
     "/establishments/{establishment_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
