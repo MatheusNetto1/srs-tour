@@ -5,6 +5,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "auth.invalid_credentials": "E-mail ou senha inválidos.",
         "auth.invalid_token": "Não foi possível validar as credenciais.",
         "indicator.not_found": "Indicador não encontrado.",
+        "indicator.already_exists": "Já existe um indicador com este slug e período.",
         "user.not_found": "Usuário não encontrado.",
         "user.email_already_exists": "Já existe um usuário com este e-mail.",
     },

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi import status as http_status
 
 from app.core.dependencies import DbSession
@@ -21,13 +21,34 @@ def get_indicator_service(db: DbSession) -> IndicatorService:
 ServiceDep = Annotated[IndicatorService, Depends(get_indicator_service)]
 
 PeriodQuery = Annotated[
-    str | None,
-    Query(description="Filtrar por período (ex: 2026)"),
+    int | None,
+    Query(description="Filtrar por período exato (ano, ex: 2026)"),
+]
+PeriodFromQuery = Annotated[
+    int | None,
+    Query(description="Filtrar pelo período inicial, inclusive (ano)"),
+]
+PeriodToQuery = Annotated[
+    int | None,
+    Query(description="Filtrar pelo período final, inclusive (ano)"),
 ]
 SectorQuery = Annotated[
     str | None,
     Query(description="Filtrar por setor (ex: Hospedagem)"),
 ]
+SlugQuery = Annotated[
+    str | None,
+    Query(description="Filtrar pelo slug da série (ex: meios-de-hospedagem)"),
+]
+
+
+def _validate_period_range(period_from: int | None, period_to: int | None) -> None:
+    if period_from is not None and period_to is not None and period_from > period_to:
+        raise HTTPException(
+            status_code=http_status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="period_from não pode ser maior que period_to.",
+        )
+
 
 # Leitura pública (/api/v1/indicators): retorna SOMENTE indicadores PUBLISHED.
 # Rascunhos nunca são expostos por estas rotas, independentemente dos parâmetros.
@@ -38,13 +59,28 @@ router = APIRouter(tags=["Indicators"])
 admin_router = APIRouter(tags=["Indicators (admin)"])
 
 
+# "/latest" precisa ser declarada antes de "/{indicator_id}": caso contrário o
+# FastAPI tenta converter "latest" para int e responde 422 em vez de 200.
+@router.get("/latest", response_model=list[IndicatorResponse])
+def list_latest_indicators(
+    service: ServiceDep,
+    sector: SectorQuery = None,
+) -> list[Indicator]:
+    return service.list_latest_published(sector)
+
+
 @router.get("", response_model=list[IndicatorResponse])
 def list_indicators(
     service: ServiceDep,
     period: PeriodQuery = None,
+    period_from: PeriodFromQuery = None,
+    period_to: PeriodToQuery = None,
     sector: SectorQuery = None,
+    slug: SlugQuery = None,
 ) -> list[Indicator]:
-    return service.list_published(period, sector)
+    _validate_period_range(period_from, period_to)
+
+    return service.list_published(period, period_from, period_to, sector, slug)
 
 
 @router.get("/{indicator_id}", response_model=IndicatorResponse)
@@ -56,13 +92,25 @@ def get_indicator(indicator_id: int, service: ServiceDep) -> Indicator:
 def admin_list_indicators(
     service: ServiceDep,
     period: PeriodQuery = None,
+    period_from: PeriodFromQuery = None,
+    period_to: PeriodToQuery = None,
     sector: SectorQuery = None,
+    slug: SlugQuery = None,
     status: Annotated[
         IndicatorStatus | None,
-        Query(description="Filtrar por status (DRAFT ou PUBLISHED)"),
+        Query(description="Filtrar por status (draft ou published)"),
     ] = None,
 ) -> list[Indicator]:
-    return service.list_indicators(period, sector, status)
+    _validate_period_range(period_from, period_to)
+
+    return service.list_indicators(
+        period,
+        period_from,
+        period_to,
+        sector,
+        slug,
+        status,
+    )
 
 
 @admin_router.get("/{indicator_id}", response_model=IndicatorResponse)
