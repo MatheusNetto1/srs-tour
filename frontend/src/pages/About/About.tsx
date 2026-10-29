@@ -1,7 +1,10 @@
 import {
 	BarChart3,
+	BedDouble,
 	Building2,
+	ClipboardCheck,
 	Database,
+	ExternalLink,
 	FileText,
 	Landmark,
 	RefreshCw,
@@ -12,6 +15,7 @@ import {
 
 import { PageContainer } from "../../components/layout/PageContainer";
 import { Card } from "../../components/ui/Card";
+import { DemoNotice } from "../../components/ui/DemoNotice";
 import { logos } from "../../constants/assets";
 
 const audiences = [
@@ -65,6 +69,78 @@ const information = [
 		description:
 			"Publicações produzidas a partir do acompanhamento e das pesquisas realizadas pelo Observatório.",
 		icon: FileText,
+	},
+];
+
+const officialSystems = [
+	{
+		title: "Cadastur",
+		description:
+			"Cadastro de pessoas físicas e jurídicas que atuam no setor de turismo, mantido pelo Ministério do Turismo. No site oficial estão as orientações para fazer e manter o cadastro.",
+		href: "https://cadastur.turismo.gov.br",
+		linkLabel: "Acessar o Cadastur",
+		icon: ClipboardCheck,
+	},
+	{
+		title: "FNRH Digital",
+		description:
+			"Ficha Nacional de Registro de Hóspedes em formato digital, do Ministério do Turismo, usada pelos meios de hospedagem para registrar os hóspedes. No site oficial estão as orientações e os manuais de uso.",
+		href: "https://fnrh.turismo.gov.br",
+		linkLabel: "Acessar a FNRH Digital",
+		icon: BedDouble,
+	},
+];
+
+const institutionGroups = [
+	{
+		label: "Marca do projeto",
+		logos: [
+			{
+				src: logos.observatorio.black,
+				alt: "Observatório do Turismo de Santa Rita do Sapucaí",
+				className: "h-16",
+			},
+			{
+				src: logos.santaRita.black,
+				alt: "Santa Rita do Sapucaí – Cidade Criativa, Cidade Feliz",
+				className: "h-24",
+			},
+		],
+	},
+	{
+		label: "Realização e apoio",
+		logos: [
+			{
+				src: logos.prefeitura.black,
+				alt: "Prefeitura Municipal de Santa Rita do Sapucaí",
+				className: "h-12",
+			},
+			{
+				src: logos.smcelt.black,
+				alt: "Secretaria Municipal de Cultura, Esporte, Lazer e Turismo",
+				className: "h-16",
+			},
+			{
+				src: logos.comtur.black,
+				alt: "Conselho Municipal de Turismo",
+				className: "h-14",
+			},
+		],
+	},
+	{
+		label: "Contexto regional",
+		logos: [
+			{
+				src: logos.caminhosMantiqueira.principal,
+				alt: "Circuito Turístico Caminhos da Mantiqueira",
+				className: "h-20",
+			},
+			{
+				src: logos.minas.principal,
+				alt: "Minas Gerais",
+				className: "h-10",
+			},
+		],
 	},
 ];
 
@@ -322,6 +398,66 @@ export function About() {
 
 			<section className="bg-slate-50 py-16 sm:py-20">
 				<PageContainer size="wide">
+					<div className="max-w-3xl">
+						<p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-blue">
+							Estabelecimentos
+						</p>
+
+						<h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+							Cadastur e FNRH Digital
+						</h2>
+
+						<p className="mt-5 leading-7 text-slate-600">
+							Orientações para estabelecimentos e prestadores de serviços
+							turísticos sobre dois sistemas do Ministério do Turismo.
+						</p>
+					</div>
+
+					<div className="mt-10 grid gap-6 md:grid-cols-2">
+						{officialSystems.map((system) => {
+							const Icon = system.icon;
+
+							return (
+								<Card key={system.title} className="flex flex-col p-7">
+									<div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-brand-blue">
+										<Icon size={21} />
+									</div>
+
+									<h3 className="mt-6 text-lg font-semibold text-slate-950">
+										{system.title}
+									</h3>
+
+									<p className="mt-3 flex-1 text-sm leading-6 text-slate-600">
+										{system.description}
+									</p>
+
+									<a
+										href={system.href}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="mt-6 inline-flex items-center gap-2 self-start rounded-lg bg-brand-blue px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
+									>
+										{system.linkLabel}
+										<ExternalLink size={16} aria-hidden="true" />
+										<span className="sr-only">(abre em nova aba)</span>
+									</a>
+								</Card>
+							);
+						})}
+					</div>
+
+					<div className="mt-6">
+						<DemoNotice>
+							O Observatório não se integra ao Cadastur nem à FNRH Digital: os
+							cadastros e registros são feitos diretamente nos sistemas oficiais
+							do Ministério do Turismo.
+						</DemoNotice>
+					</div>
+				</PageContainer>
+			</section>
+
+			<section className="bg-white py-16 sm:py-20">
+				<PageContainer size="wide">
 					<Card className="overflow-hidden">
 						<div className="grid lg:grid-cols-[0.9fr_1.1fr]">
 							<div className="bg-brand-gradient p-8 text-white sm:p-10 lg:p-12">
@@ -345,28 +481,29 @@ export function About() {
 								</p>
 
 								<p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-									Identidade institucional associada ao Observatório e à gestão
-									municipal do turismo.
+									Identidade institucional associada ao Observatório, à gestão
+									municipal do turismo e ao contexto regional.
 								</p>
 
-								<div className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-8">
-									<img
-										src={logos.observatorio.black}
-										alt="Observatório do Turismo de Santa Rita do Sapucaí"
-										className="h-16 w-auto object-contain"
-									/>
+								<div className="mt-8 space-y-8">
+									{institutionGroups.map((group) => (
+										<div key={group.label}>
+											<p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+												{group.label}
+											</p>
 
-									<img
-										src={logos.smcelt.black}
-										alt="Secretaria Municipal de Cultura, Esporte, Lazer e Turismo"
-										className="h-16 w-auto object-contain"
-									/>
-
-									<img
-										src={logos.comtur.black}
-										alt="Conselho Municipal de Turismo"
-										className="h-14 w-auto object-contain"
-									/>
+											<div className="mt-4 flex flex-wrap items-center gap-x-10 gap-y-6">
+												{group.logos.map((logo) => (
+													<img
+														key={logo.alt}
+														src={logo.src}
+														alt={logo.alt}
+														className={`${logo.className} w-auto object-contain`}
+													/>
+												))}
+											</div>
+										</div>
+									))}
 								</div>
 							</div>
 						</div>
