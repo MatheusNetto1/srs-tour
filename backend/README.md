@@ -166,8 +166,12 @@ poetry run pytest
 
 ## Seed
 
-`make seed` executa `backend/scripts/seed.py`, que ainda não insere nada.
-Veja a docstring do script para adicionar dados de forma idempotente.
+`make seed` executa `backend/scripts/seed.py`, que popula o banco de
+desenvolvimento com indicadores e relatórios de exemplo (dados definidos em
+`backend/scripts/seed_content.py`, uma cópia dos mocks do frontend): 15
+indicadores publicados e 1 rascunho; 6 relatórios publicados e 1 rascunho.
+É idempotente — rodar de novo não duplica os registros. Veja a docstring do
+script para adicionar outros dados de forma idempotente.
 Dentro do container: `make docker-seed`.
 
 Os testes do backend utilizam Pytest. Requisições HTTP à aplicação podem
