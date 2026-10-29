@@ -238,7 +238,7 @@ def test_get_draft_report_by_id_is_hidden(client: TestClient):
     response = client.get(f"{REPORTS_URL}/{draft['id']}")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json()["detail"] == "Relatório não encontrado."
+    assert response.json()["detail"] == "Recurso não encontrado."
 
 
 def test_get_nonexistent_report_returns_404(client: TestClient):
