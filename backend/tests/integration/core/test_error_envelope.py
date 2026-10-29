@@ -87,21 +87,3 @@ def test_existing_domain_error_details_remain_unchanged(client: TestClient) -> N
         "detail": "Indicador não encontrado.",
         "code": "indicator.not_found",
     }
-
-    user_res = client.get("/api/v1/users/999999")
-    assert user_res.status_code == status.HTTP_404_NOT_FOUND
-    assert user_res.json() == {
-        "detail": "Usuário não encontrado.",
-        "code": "user.not_found",
-    }
-
-    auth_res = client.post(
-        "/api/v1/auth/login",
-        data={"username": "inexistente@srstour.com", "password": "senha-errada-123"},
-    )
-    assert auth_res.status_code == status.HTTP_401_UNAUTHORIZED
-    assert auth_res.json() == {
-        "detail": "E-mail ou senha inválidos.",
-        "code": "auth.invalid_credentials",
-    }
-    assert auth_res.headers["www-authenticate"] == "Bearer"

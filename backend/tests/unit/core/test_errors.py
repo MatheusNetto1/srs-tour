@@ -144,10 +144,26 @@ def test_http_exception_handler_maps_status_to_error_envelope(
     }
 
 
-def test_data_error_handler_returns_422_invalid_value() -> None:
+def test_http_exception_handler_forwards_headers() -> None:
+    exc = HTTPException(
+        status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+        detail="Method Not Allowed",
+        headers={"Allow": "GET, HEAD"},
+    )
+
+    response = asyncio.run(http_exception_handler(make_request(), exc))
+
+    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    assert response.headers["allow"] == "GET, HEAD"
+
+
+def test_data_error_handler_returns_422_invalid_value(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     exc = DataError("SELECT 1", {}, Exception("integer out of range"))
 
-    response = asyncio.run(data_error_handler(make_request(), exc))
+    with caplog.at_level("WARNING"):
+        response = asyncio.run(data_error_handler(make_request(), exc))
     body = json.loads(response.body)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
@@ -155,6 +171,7 @@ def test_data_error_handler_returns_422_invalid_value() -> None:
         "detail": get_message("validation.invalid_value"),
         "code": "validation.invalid_value",
     }
+    assert "integer out of range" in caplog.text
 
 
 def test_unhandled_exception_handler_returns_500_without_leaking_details() -> None:

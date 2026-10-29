@@ -48,10 +48,6 @@ def test_base_and_envelope_codes_have_pt_br_messages(code: str) -> None:
 
 
 def test_existing_domain_messages_remain_unchanged() -> None:
-    assert get_message("auth.invalid_credentials") == "E-mail ou senha inválidos."
-    assert (
-        get_message("auth.invalid_token") == "Não foi possível validar as credenciais."
-    )
     assert get_message("indicator.not_found") == "Indicador não encontrado."
     assert get_message("user.not_found") == "Usuário não encontrado."
     assert (

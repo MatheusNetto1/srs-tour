@@ -92,7 +92,7 @@ async def request_validation_error_handler(
     request: Request,
     error: RequestValidationError,
 ) -> JSONResponse:
-    # Preserva o tratamento de NaN/Infinity antes de montar a lista C1 de `errors`.
+    # _json_safe é preservado por contrato (C8) antes de montar a lista C1 de `errors`.
     safe_errors = jsonable_encoder(_json_safe(error.errors()))
     errors = [
         {
@@ -133,6 +133,12 @@ async def data_error_handler(
     request: Request,
     error: DataError,
 ) -> JSONResponse:
+    cause = error.orig if error.orig is not None else error
+    logger.warning(
+        "DataError converted to 422 (%s): %s",
+        type(cause).__name__,
+        cause,
+    )
     code = "validation.invalid_value"
 
     return JSONResponse(
