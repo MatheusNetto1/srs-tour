@@ -7,6 +7,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "auth.forbidden": "Você não tem permissão para realizar esta ação.",
         "auth.token_expired": "Sessão expirada. Faça login novamente.",
         "indicator.not_found": "Indicador não encontrado.",
+        "tourism_establishment.not_found": "Estabelecimento turístico não encontrado.",
         "user.not_found": "Usuário não encontrado.",
         "user.email_already_exists": "Já existe um usuário com este e-mail.",
     },
