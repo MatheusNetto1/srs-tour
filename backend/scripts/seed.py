@@ -1,8 +1,5 @@
 """Popula o banco de desenvolvimento com dados iniciais (`make seed`).
 
-Hoje o seed está vazio de propósito: os dados serão definidos junto com a
-integração front-back.
-
 Como adicionar dados:
 
 1. Crie uma função `seed_<recurso>(session: Session) -> None` neste arquivo.
@@ -22,10 +19,14 @@ from collections.abc import Callable
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
+from scripts.seed_content import seed_indicators, seed_reports
 
 Seeder = Callable[[Session], None]
 
-SEEDERS: list[Seeder] = []
+SEEDERS: list[Seeder] = [
+    seed_indicators,
+    seed_reports,
+]
 
 
 def main() -> None:

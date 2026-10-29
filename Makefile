@@ -261,7 +261,7 @@ back-migration-single-head: ## Falha se houver mais de uma head de migrations (s
 back-migration-check: ## Verifica se os models divergem das migrations
 	@$(BACK_RUN) alembic check
 
-seed: ## Popula o banco de desenvolvimento (estrutura pronta, sem dados ainda)
+seed: ## Popula o banco de desenvolvimento com dados de exemplo
 	@$(BACK_RUN) python -m scripts.seed
 
 

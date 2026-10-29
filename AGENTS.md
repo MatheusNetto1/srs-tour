@@ -24,7 +24,7 @@ make back-test-migrate  # cria o banco de teste se faltar e aplica migrations ne
 make back-migration m="create x table"   # autogenerate + numeração 000N_
 make back-migrate / make back-migrate-down
 make front-api-types    # gera frontend/src/api/schema.d.ts do /openapi.json (exige make up; arquivo ignorado pelo git)
-make seed               # estrutura pronta, sem dados ainda
+make seed               # popula indicadores e relatórios de exemplo (idempotente)
 make back-migration-single-head   # falha se houver mais de uma head do Alembic (sem banco; roda no CI)
 make docker-seed / docker-back-test / docker-back-test-migrate / docker-back-migration m="..."   # o mesmo dentro do container backend (sem Poetry no host; exigem make up)
 make db-reset CONFIRM=1 / make clean-all CONFIRM=1   # destrutivos: exigem CONFIRM=1
