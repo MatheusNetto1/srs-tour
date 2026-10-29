@@ -22,6 +22,7 @@ import { PageContainer } from "../../components/layout/PageContainer";
 import { Card } from "../../components/ui/Card";
 import { DemoNotice } from "../../components/ui/DemoNotice";
 import { Select } from "../../components/ui/Select";
+import { chartColors } from "../../constants/charts";
 import {
 	dashboardEvolution,
 	getSectorDistribution,
@@ -220,7 +221,7 @@ export function Indicators() {
 									<Line
 										type="monotone"
 										dataKey="establishments"
-										stroke="#0a4aad"
+										stroke={chartColors.line}
 										strokeWidth={3}
 										activeDot={{ r: 6 }}
 									/>
@@ -265,7 +266,11 @@ export function Indicators() {
 
 									<Tooltip />
 
-									<Bar dataKey="value" fill="#6c5ce0" radius={[6, 6, 0, 0]} />
+									<Bar
+										dataKey="value"
+										fill={chartColors.bar}
+										radius={[6, 6, 0, 0]}
+									/>
 								</BarChart>
 							</ResponsiveContainer>
 						</div>
