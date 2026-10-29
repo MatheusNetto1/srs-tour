@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.dependencies import get_db
 from app.indicators.models import Indicator
 from app.main import app
+from app.reports.models import Report
 from app.tourism.models import TourismEstablishment
 from app.users.models import User
 
@@ -41,6 +42,7 @@ def db_session() -> Generator[Session, None, None]:
 
         session.rollback()
         session.execute(delete(Indicator))
+        session.execute(delete(Report))
         session.execute(delete(TourismEstablishment))
         session.execute(delete(User))
         session.commit()
