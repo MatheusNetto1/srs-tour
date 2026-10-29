@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -397,6 +399,16 @@ def test_admin_list_filters_by_status_and_q(client: TestClient) -> None:
     assert [item["id"] for item in pub_res.json()] == [published["id"]]
 
 
+def test_admin_list_rejects_invalid_status_filter(client: TestClient) -> None:
+    response = client.get(ADMIN_URL, params={"status": "xyz"})
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    body = response.json()
+    assert body["detail"] == "Dados inválidos."
+    assert body["code"] == "validation.failed"
+    assert any(item["field"] == "query.status" for item in body["errors"])
+
+
 def test_admin_get_report_returns_draft_and_nonexistent_returns_404(
     client: TestClient,
 ) -> None:
@@ -598,6 +610,14 @@ def test_write_operations_are_not_available_on_public_reports_router(
 def test_service_create_and_publish_signatures_remain_compatible(
     db_session: Session,
 ) -> None:
+    create_sig = inspect.signature(service.create_report)
+    publish_sig = inspect.signature(service.publish_report)
+
+    assert list(create_sig.parameters) == ["db", "data"]
+    assert create_sig.return_annotation is Report
+    assert list(publish_sig.parameters) == ["db", "report_id"]
+    assert publish_sig.return_annotation is Report
+
     created = service.create_report(
         db_session,
         ReportCreate(

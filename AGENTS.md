@@ -61,7 +61,7 @@ O alvo para corrigir o frontend é `make front-lint-fix`.
   - Toda resposta de erro usa o envelope `{"detail": "<mensagem em pt-BR>", "code": "<dominio.motivo>"}`.
   - No 422 de validação, inclui `errors: [{"field", "code", "message"}]` com `code = "validation.failed"` e `detail = "Dados inválidos."`; `DataError` vira 422 `validation.invalid_value`; `HTTPException` vira `http.not_found`/`http.method_not_allowed`/`http.error`; `Exception` não tratada vira 500 `internal_error` em JSON.
   - Exceções de domínio em `exceptions.py` herdam de `NotFoundError`/`ConflictError`/`UnauthorizedError` com `code` estável (ex.: `user.not_found`); o handler global converte em 404/409/401.
-  - `code` novo ⇒ adicione a mensagem em PT-BR em `app/core/messages.py` (chave = `code`). Código novo usa esse padrão; `tourism` e `reports` ainda usam `HTTPException`/exceção local.
+  - `code` novo ⇒ adicione a mensagem em PT-BR em `app/core/messages.py` (chave = `code`). Código novo usa esse padrão; `tourism` ainda usa `HTTPException`.
 - Novo model: importe em `app/models.py` (usado por `alembic/env.py`) e gere a migration.
 - Migrations: sempre `make back-migration`; revise o arquivo gerado; nunca edite migration já integrada (crie outra); nunca `Base.metadata.create_all()` no lugar do Alembic.
 - Auth: hash e JWT em `app/core/security.py` (não reimplementar). Rotas protegidas recebem `current_user: CurrentUser` (`app/auth/dependencies.py`).
