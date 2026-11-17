@@ -1,7 +1,11 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.reports.models import Report
+
+
+def _escape_like(term: str) -> str:
+    return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 def list_reports(
@@ -10,6 +14,7 @@ def list_reports(
     year: int | None = None,
     category: str | None = None,
     status: str | None = None,
+    q: str | None = None,
 ) -> list[Report]:
     statement = select(Report).order_by(Report.year.desc(), Report.title)
 
@@ -23,6 +28,16 @@ def list_reports(
 
     if status is not None:
         statement = statement.where(Report.status == status)
+
+    if q is not None:
+        pattern = f"%{_escape_like(q)}%"
+        statement = statement.where(
+            or_(
+                Report.title.ilike(pattern, escape="\\"),
+                Report.description.ilike(pattern, escape="\\"),
+                Report.category.ilike(pattern, escape="\\"),
+            )
+        )
 
     return list(db.scalars(statement).all())
 
