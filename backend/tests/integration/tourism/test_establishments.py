@@ -95,7 +95,8 @@ def test_get_nonexistent_establishment_returns_404(
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {
-        "detail": "Tourism establishment not found.",
+        "detail": "Recurso não encontrado.",
+        "code": "http.not_found",
     }
 
 

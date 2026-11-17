@@ -111,7 +111,10 @@ def test_create_user_rejects_duplicate_email(
 
     assert first_response.status_code == status.HTTP_201_CREATED
     assert second_response.status_code == status.HTTP_409_CONFLICT
-    assert second_response.json() == {"detail": EMAIL_CONFLICT_DETAIL}
+    assert second_response.json() == {
+        "detail": EMAIL_CONFLICT_DETAIL,
+        "code": "user.email_already_exists",
+    }
 
 
 def test_create_user_strips_name(client: TestClient) -> None:
@@ -176,7 +179,10 @@ def test_get_nonexistent_user_returns_not_found(
     response = client.get(f"{BASE_URL}/999999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "user.not_found",
+    }
 
 
 def test_update_user(client: TestClient) -> None:
@@ -283,7 +289,10 @@ def test_update_user_rejects_email_from_another_user(
     )
 
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": EMAIL_CONFLICT_DETAIL}
+    assert response.json() == {
+        "detail": EMAIL_CONFLICT_DETAIL,
+        "code": "user.email_already_exists",
+    }
 
 
 def test_update_nonexistent_user_returns_not_found(
@@ -295,7 +304,10 @@ def test_update_nonexistent_user_returns_not_found(
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "user.not_found",
+    }
 
 
 def test_deactivate_user(
@@ -325,7 +337,10 @@ def test_deactivate_nonexistent_user_returns_not_found(
     response = client.delete(f"{BASE_URL}/999999")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "user.not_found",
+    }
 
 
 def test_deactivate_already_inactive_user_is_idempotent(
@@ -392,7 +407,10 @@ def test_activate_nonexistent_user_returns_not_found(
     response = client.post(f"{BASE_URL}/999999/activate")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": NOT_FOUND_DETAIL}
+    assert response.json() == {
+        "detail": NOT_FOUND_DETAIL,
+        "code": "user.not_found",
+    }
 
 
 def test_activate_user_does_not_change_other_data(
@@ -462,7 +480,10 @@ def test_inactive_user_keeps_email_reserved_on_create(
     response = create_user(client, email="ADMIN@Example.com")
 
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": EMAIL_CONFLICT_DETAIL}
+    assert response.json() == {
+        "detail": EMAIL_CONFLICT_DETAIL,
+        "code": "user.email_already_exists",
+    }
 
 
 def test_inactive_user_keeps_email_reserved_on_update(
@@ -478,7 +499,10 @@ def test_inactive_user_keeps_email_reserved_on_update(
     )
 
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": EMAIL_CONFLICT_DETAIL}
+    assert response.json() == {
+        "detail": EMAIL_CONFLICT_DETAIL,
+        "code": "user.email_already_exists",
+    }
 
 
 def test_database_rejects_emails_that_differ_only_by_case(
