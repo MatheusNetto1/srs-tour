@@ -3,6 +3,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
+from app.users.models import UserRole
+
 UserName = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=2, max_length=120),
@@ -31,6 +33,7 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str
+    role: UserRole
     is_active: bool
     created_at: datetime
     updated_at: datetime

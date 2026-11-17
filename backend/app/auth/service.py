@@ -3,7 +3,11 @@ from functools import lru_cache
 import jwt
 from sqlalchemy.orm import Session
 
-from app.auth.exceptions import InvalidCredentialsError, InvalidTokenError
+from app.auth.exceptions import (
+    InvalidCredentialsError,
+    InvalidTokenError,
+    TokenExpiredError,
+)
 from app.auth.schemas import Token
 from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
@@ -69,6 +73,8 @@ def decode_access_token(token: str) -> int:
             algorithms=[settings.algorithm],
             options={"require": ["exp", "sub"]},
         )
+    except jwt.ExpiredSignatureError as error:
+        raise TokenExpiredError from error
     except jwt.PyJWTError as error:
         raise InvalidTokenError from error
 

@@ -14,6 +14,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "internal_error": "Erro interno do servidor.",
         "auth.invalid_credentials": "E-mail ou senha inválidos.",
         "auth.invalid_token": "Não foi possível validar as credenciais.",
+        "auth.forbidden": "Você não tem permissão para realizar esta ação.",
+        "auth.token_expired": "Sessão expirada. Faça login novamente.",
         "indicator.not_found": "Indicador não encontrado.",
         "report.not_found": "Relatório não encontrado.",
         "user.not_found": "Usuário não encontrado.",

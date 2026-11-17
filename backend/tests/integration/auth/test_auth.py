@@ -2,25 +2,35 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
-from fastapi import status
+from fastapi import Depends, status
 from fastapi.testclient import TestClient
 from httpx2 import Response
 from sqlalchemy.orm import Session
 
 from app.auth import service as auth_service
+from app.auth.dependencies import get_current_user, require_admin
+from app.auth.exceptions import AuthForbiddenError
 from app.core.config import settings
 from app.core.messages import get_message
 from app.core.security import create_access_token, hash_password
-from app.users.models import User
+from app.main import app
+from app.users.models import User, UserRole
 
 LOGIN_URL = "/api/v1/auth/login"
 ME_URL = "/api/v1/auth/me"
+REQUIRE_ADMIN_URL = "/test/require-admin"
 
 USER_EMAIL = "admin@srstour.com"
 USER_PASSWORD = "senha-segura-123"
 
 INVALID_CREDENTIALS = get_message("auth.invalid_credentials")
 INVALID_TOKEN = get_message("auth.invalid_token")
+TOKEN_EXPIRED = get_message("auth.token_expired")
+
+
+@app.get(REQUIRE_ADMIN_URL, dependencies=[Depends(require_admin)])
+def admin_only_test_route() -> dict[str, bool]:
+    return {"ok": True}
 
 
 def create_user(
@@ -78,6 +88,12 @@ def assert_invalid_credentials(response: Response) -> None:
 def assert_invalid_token(response: Response) -> None:
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json()["detail"] == INVALID_TOKEN
+    assert response.headers["www-authenticate"] == "Bearer"
+
+
+def assert_expired_token(response: Response) -> None:
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json()["detail"] == TOKEN_EXPIRED
     assert response.headers["www-authenticate"] == "Bearer"
 
 
@@ -217,6 +233,7 @@ def test_me_with_valid_token(
 
     assert data["id"] == user.id
     assert data["email"] == USER_EMAIL
+    assert data["role"] == UserRole.ADMIN
     assert data["is_active"] is True
     assert "password" not in data
     assert "password_hash" not in data
@@ -321,7 +338,7 @@ def test_me_with_expired_token_returns_401(
 
     response = client.get(ME_URL, headers=auth_headers(token))
 
-    assert_invalid_token(response)
+    assert_expired_token(response)
 
 
 def test_me_with_token_without_exp_returns_401(
@@ -375,3 +392,96 @@ def test_me_with_token_of_deactivated_user_returns_401(
     response = client.get(ME_URL, headers=auth_headers(token))
 
     assert_invalid_token(response)
+
+
+def test_require_admin_accepts_admin() -> None:
+    admin = User(
+        name="Administrador",
+        email=USER_EMAIL,
+        password_hash="hash",
+        role=UserRole.ADMIN,
+    )
+
+    assert require_admin(admin) is admin
+
+
+def test_require_admin_rejects_user_without_admin_role() -> None:
+    user = User(
+        name="Usuário",
+        email="usuario@srstour.com",
+        password_hash="hash",
+        role="establishment",
+    )
+
+    with pytest.raises(AuthForbiddenError):
+        require_admin(user)
+
+
+def test_require_admin_without_token_returns_401(
+    anonymous_client: TestClient,
+) -> None:
+    response = anonymous_client.get(REQUIRE_ADMIN_URL)
+
+    assert_invalid_token(response)
+
+
+def test_require_admin_with_invalid_token_returns_401(
+    anonymous_client: TestClient,
+) -> None:
+    response = anonymous_client.get(
+        REQUIRE_ADMIN_URL,
+        headers=auth_headers("token-invalido"),
+    )
+
+    assert_invalid_token(response)
+
+
+def test_require_admin_with_expired_token_returns_401(
+    anonymous_client: TestClient,
+) -> None:
+    token = create_access_token(
+        subject="1",
+        expires_delta=timedelta(minutes=-1),
+    )
+
+    response = anonymous_client.get(
+        REQUIRE_ADMIN_URL,
+        headers=auth_headers(token),
+    )
+
+    assert_expired_token(response)
+
+
+def test_require_admin_with_non_admin_user_returns_403(
+    anonymous_client: TestClient,
+) -> None:
+    def override_get_current_user() -> User:
+        return User(
+            name="Usuário",
+            email="usuario@srstour.com",
+            password_hash="hash",
+            role="establishment",
+        )
+
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    response = anonymous_client.get(REQUIRE_ADMIN_URL)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["detail"] == get_message("auth.forbidden")
+
+
+def test_require_admin_with_admin_returns_200(
+    anonymous_client: TestClient,
+    db_session: Session,
+) -> None:
+    user = create_user(db_session)
+    token = create_access_token(subject=str(user.id))
+
+    response = anonymous_client.get(
+        REQUIRE_ADMIN_URL,
+        headers=auth_headers(token),
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"ok": True}
