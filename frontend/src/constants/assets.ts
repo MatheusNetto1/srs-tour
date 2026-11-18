@@ -12,4 +12,20 @@ export const logos = {
 	comtur: {
 		black: `${baseUrl}logos/comtur/Logo_COMTUR_2025_preto.png`,
 	},
+
+	santaRita: {
+		black: `${baseUrl}logos/santa-rita/descritivo-pt-preto.png`,
+	},
+
+	prefeitura: {
+		black: `${baseUrl}logos/prefeitura/prefeitura-horizontal-preto.png`,
+	},
+
+	caminhosMantiqueira: {
+		principal: `${baseUrl}logos/caminhos-mantiqueira/circuito.png`,
+	},
+
+	minas: {
+		principal: `${baseUrl}logos/minas/marca-minas.png`,
+	},
 } as const;
