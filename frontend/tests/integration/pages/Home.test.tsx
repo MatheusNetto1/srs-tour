@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest";
 import { App } from "../../../src/App";
 
 describe("Home page", () => {
-	it("renders the main institutional content", () => {
+	it("renders the main institutional content", async () => {
 		render(<App />);
 
 		expect(
-			screen.getByRole("heading", {
+			await screen.findByRole("heading", {
 				level: 1,
 				name: /dados para compreender e fortalecer o turismo/i,
 			}),
@@ -27,11 +27,11 @@ describe("Home page", () => {
 		).toBeInTheDocument();
 	});
 
-	it("renders the tourism indicators section", () => {
+	it("renders the tourism indicators section", async () => {
 		render(<App />);
 
 		expect(
-			screen.getByRole("heading", {
+			await screen.findByRole("heading", {
 				name: /turismo em números/i,
 			}),
 		).toBeInTheDocument();
@@ -42,11 +42,11 @@ describe("Home page", () => {
 		expect(screen.getByText("Empregos no turismo")).toBeInTheDocument();
 	});
 
-	it("renders the observatory resources", () => {
+	it("renders the observatory resources", async () => {
 		render(<App />);
 
 		expect(
-			screen.getByRole("heading", {
+			await screen.findByRole("heading", {
 				name: /explore o observatório/i,
 			}),
 		).toBeInTheDocument();
